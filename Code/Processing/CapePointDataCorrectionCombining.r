@@ -1,3 +1,5 @@
+setwd("C:/Work/Dimensions/Data") # Change this to your local Dimensions/Data directory
+
 #########################################################################
 #########################################################################
 ################### STEP 1: SYNONYM CORRECTIONS  ########################
@@ -7,16 +9,15 @@
 library(gregmisc)
 
 # Read in synonym data
-syn=read.csv("C:/Work/Cape Point Data/Synonyms/MasterSynonymCorrections.csv")
+syn=read.csv("PreprocessedData/MasterSynonymCorrections.csv")
 
 #########################################################################
 ################### Correct synonyms in releve data #####################
 #########################################################################
-setwd("C:/Work/Cape Point Data/2010survey/FinalData/Veg")
 
 #Read in releve data
-new=read.csv("ReleveQuadrat2010.csv")
-old=read.table("C:/Work/Cape Point Data/2010survey/Veg/capepointALL.txt", header=T)
+new=read.csv("PreprocessedData/ReleveQuadrat2010.csv")
+old=read.table("PreprocessedData/capepointALL.txt", header=T)
 
 # Correct from synonym spreadsheet
 old=rename.vars(old, from=c("GENUS","SPECIES"), to=c("Genus","Species"))
@@ -50,16 +51,14 @@ nrow(new1[is.na(new1$NewGenus)==T,]) #0
 
 
 ##Write corrected files
-write.csv(new1, "ReleveQuadrat2010_NamesCorrected.csv", row.names=F)
-write.csv(old1, "Releve66_96_NamesCorrected.csv", row.names=F)
+write.csv(new1, "Data/ReleveQuadrat2010_NamesCorrected.csv", row.names=F)
+write.csv(old1, "Data/Releve66_96_NamesCorrected.csv", row.names=F)
 
 #########################################################################
 ################### Correct synonyms in (field & lab) trait data ########
 #########################################################################
-setwd("C:/Work/Cape Point Data/2010survey/FinalData/Traits/Intermediate")
 
-
-fieldtr=read.csv("20110329_FieldData.csv", stringsAsFactors=F)
+fieldtr=read.csv("PreprocessedData/20110329_FieldData.csv", stringsAsFactors=F)
 
 fieldtr$SpeciesID=paste(fieldtr$Genus, fieldtr$Species)
 fieldtr$SpeciesID=sub("  ", " ", fieldtr$SpeciesID)
@@ -115,14 +114,13 @@ fieldtr2[is.na(fieldtr2$NewGenus)==T,]
 nrow(fieldtr2[is.na(fieldtr2$NewGenus)==T,])  #0
 
 ##Write corrected file
-write.csv(fieldtr2, "20110329_FieldData_namescorrected.csv", row.names=F)
+write.csv(fieldtr2, "Data/20110329_FieldData_namescorrected.csv", row.names=F)
 
 #########################################################################
 ################### Correct synonyms in isotope data ####################
 #########################################################################
-setwd("C:/Work/Cape Point Data/2010survey/FinalData/Traits/Intermediate")
 
-iso=read.csv("isotopes.csv")
+iso=read.csv("PreprocessedData/isotopes.csv")
 head(iso)
 dim(iso)
 
@@ -177,7 +175,7 @@ iso1[is.na(iso1$NewGenus)==T,]
 iso2=iso1[is.na(iso1$NewGenus)==F,]  
 dim(iso2)
 
-write.csv(iso2, "isotopes_namescorrected.csv", row.names=F)
+write.csv(iso2, "Data/isotopes_namescorrected.csv", row.names=F)
 
 
 #########################################################################
@@ -186,13 +184,12 @@ write.csv(iso2, "isotopes_namescorrected.csv", row.names=F)
 #########################################################################
 #########################################################################
 
-setwd("C:/Work/Cape Point Data/2010survey/FinalData/Veg")
 library(reshape)
 library(gregmisc)
 
 #Read in data
-new=read.csv("ReleveQuadrat2010_namescorrected.csv")
-old=read.csv("Releve66_96_NamesCorrected.csv")
+new=read.csv("Data/ReleveQuadrat2010_namescorrected.csv")
+old=read.csv("Data/Releve66_96_NamesCorrected.csv")
 
 str(new)
 
@@ -228,7 +225,7 @@ releve2=merge(releve,mold,by=c("Year","Plot","NewGenus","NewSpecies"),all=T)
 
 releve2=subset(releve2, select=c("Year","Plot","NewGenus","NewSpecies","MeanPercCov","TotalAbun","AbunClass"))
 
-write.csv(releve2, "ReleveAll.csv")
+write.csv(releve2, "Data/ReleveAll.csv")
 
 
 #########################################################################
@@ -238,18 +235,16 @@ write.csv(releve2, "ReleveAll.csv")
 #########################################################################
 #########################################################################
 
-
-setwd("C:/Work/Cape Point Data/2010survey/FinalData/Traits/Intermediate")
 library(gregmisc)
 
 #################### Lab Data ######################
 ####################################################
 
-tr=read.csv("20110329_FieldData_namescorrected.csv", stringsAsFactors=F)
+tr=read.csv("Data/20110329_FieldData_namescorrected.csv", stringsAsFactors=F)
 head(tr)
 dim(tr)
 str(tr)
-labtr=read.csv("Cape Point Lab Data.csv", stringsAsFactors=F)
+labtr=read.csv("PreprocessedData/Cape Point Lab Data.csv", stringsAsFactors=F)
 head(labtr)
 dim(labtr)
 str(labtr)
@@ -272,7 +267,7 @@ dim(alltr)
 colnames(alltr)
 
 #add coordinates
-coord=read.csv("C:/Work/Cape Point Data/2010survey/FinalData/Env/Intermediate/Taylor_COGHNR.csv")
+coord=read.csv("PreprocessedData/Taylor_COGHNR.csv")
 head(coord)
 coord=subset(coord, select=c(PLOT, Latitude..Ross.Turner.2010., Longitude..Ross.Turner.2010.))
 coord=rename.vars(coord,from="PLOT", to="plot")
@@ -325,11 +320,11 @@ alltr$LeafDry_g=alltr$RawLeafDry_g/alltr$NumLeaves
 summary(alltr)
 
 
-write.csv(alltr, "C:/Work/Cape Point Data/2010survey/FinalData/Traits/LabData.csv",row.names=F)
+write.csv(alltr, "Data/LabData.csv",row.names=F)
 
 ######### Correcting Errors in Lab Data ############
 ####################################################
-labdt=read.csv("C:/Work/Cape Point Data/2010survey/FinalData/Traits/LabData.csv")
+labdt=read.csv("Data/LabData.csv")
 head(labdt)
 dim(labdt)
 
@@ -341,16 +336,16 @@ labdt[labdt$LeafThickness_mm==146,]
 labdt$LeafThickness_mm[labdt$LeafThickness_mm==146]=.146
 labdt[labdt$LeafThickness_mm==.146,]
 
-write.csv(labdt, "C:/Work/Cape Point Data/2010survey/FinalData/Traits/LabData.csv",row.names=F)
+write.csv(labdt, "Data/LabData.csv",row.names=F)
  
 ########### Traits by Species Dataframe ############
 ####################################################
 
 
-tr=read.csv("20110329_FieldData_namescorrected.csv")
+tr=read.csv("Data/20110329_FieldData_namescorrected.csv")
 head(tr)
 dim(tr)
-labdt=read.csv("C:/Work/Cape Point Data/2010survey/FinalData/Traits/LabData.csv")
+labdt=read.csv("Data/LabData.csv")
 head(labdt)
 dim(labdt)
 
@@ -438,7 +433,7 @@ summary(mx)
 dim(mx)
 
 ##Veg traits
-cpall=read.csv("C:/Work/Cape Point Data/2010survey/FinalData/Veg/Releve66_96_NamesCorrected.csv", header=T)
+cpall=read.csv("Data/Releve66_96_NamesCorrected.csv", header=T)
 head(cpall)
 dim(cpall)
 
@@ -450,7 +445,7 @@ summary(grw)
 dim(grw)
 
 ##Isotope data
-iso=read.csv("isotopes_namescorrected.csv")
+iso=read.csv("Data/isotopes_namescorrected.csv")
 head(iso)
 
 isomean=aggregate(iso[5:16], by=list(iso$NewGenus, iso$NewSpecies), mean, na.rm=T)
@@ -518,4 +513,4 @@ allsptr1=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T)
 colnames(allsptr)
 dim(allsptr)
 
-write.csv(allsptr, "C:/Work/Cape Point Data/2010survey/FinalData/Traits/SpeciesTraits.csv",row.names=F)
+write.csv(allsptr, "Data/SpeciesTraits.csv",row.names=F)
