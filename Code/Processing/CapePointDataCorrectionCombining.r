@@ -7,9 +7,22 @@ setwd("C:/Work/Dimensions/Data") # Change this to your local Dimensions/Data dir
 #########################################################################
 
 library(gregmisc)
+library(xlsx)
 
-# Read in synonym data
-syn=read.csv("PreprocessedData/MasterSynonymCorrections.csv")
+## Read in synonym data
+syn=read.xlsx("PreprocessedData/MasterSynonymCorrections.xlsx", 1)
+
+# Create speciesID of genus & species names; minor edits (remove issues from NAs, double spaces)
+syn$SpeciesID=paste(syn$OldGenus, syn$OldSpecies)
+syn$SpeciesID=sub("NA", "", syn$SpeciesID)
+syn$SpeciesID=sub("  ", " ", syn$SpeciesID)
+
+head(syn)
+syn1=subset(syn, select=c("SpeciesID", "NewGenus", "NewSpecies"))
+head(syn1)
+
+## Read in list of seasonally apparent species
+seas=read.xlsx("PreprocessedData/MasterSynonymCorrections.xlsx", 2)
 
 #########################################################################
 ################### Correct synonyms in releve data #####################
@@ -23,18 +36,15 @@ old=read.table("PreprocessedData/capepointALL.txt", header=T)
 old=rename.vars(old, from=c("GENUS","SPECIES"), to=c("Genus","Species"))
 old$SpeciesID=paste(old$Genus, old$Species)
 new$SpeciesID=paste(new$Genus, new$Species)
-syn$SpeciesID=paste(syn$OldGenus, syn$OldSpecies)
 
+#Change double spaces to single spaces
 old$SpeciesID=sub("  ", " ", old$SpeciesID)
 new$SpeciesID=sub("  ", " ", new$SpeciesID)
-syn$SpeciesID=sub("  ", " ", syn$SpeciesID)
 
+#Correct one entry with space at beginning of name
 new$SpeciesID[new$SpeciesID==" Erica muscosa"]="Erica muscosa"
 
-head(syn)
-syn1=subset(syn, select=c("SpeciesID", "NewGenus", "NewSpecies"))
-head(syn1)
-
+#Merge releve data with synonyms
 old1=merge(old, syn1, by="SpeciesID", all.x=T, all.y=F)
 head(old1)
 summary(old1)
@@ -49,6 +59,9 @@ nrow(old1[is.na(old1$NewGenus)==T,])  #0
 new1[is.na(new1$NewGenus)==T,]
 nrow(new1[is.na(new1$NewGenus)==T,]) #0
 
+##Exclude seasonally apparent species
+old1<-old1[-which(old1[,1]%in%seas[,1]),]
+new1<-new1[-which(new1[,1]%in%seas[,1]),]
 
 ##Write corrected files
 write.csv(new1, "Data/ReleveQuadrat2010_NamesCorrected.csv", row.names=F)
@@ -65,53 +78,31 @@ fieldtr$SpeciesID=sub("  ", " ", fieldtr$SpeciesID)
 
 fieldtr1=merge(fieldtr, syn1, by="SpeciesID", all.x=T, all.y=F)
 
+## "Watsonia sp." in field traits: only one was collected and Cory & Adam didn't know if it was tabularis or meriana
+# Because the only difference is in flower color, the measurements are to be used for both species
 fieldtr1$NewGenus=as.character(fieldtr1$NewGenus)
 fieldtr1$NewSpecies=as.character(fieldtr1$NewSpecies)
-fieldtr1$NewGenus[fieldtr1$SpeciesID==" p57sp1"]="Syncarpha"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID==" p57sp1"]="speciosissima"
-fieldtr1$NewGenus[fieldtr1$SpeciesID==" p57sp2"]="Tetraria"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID==" p57sp2"]="sylvatica"
-fieldtr1$NewGenus[fieldtr1$SpeciesID==" p57sp3"]="Tetraria"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID==" p57sp3"]="cuspidata"
-fieldtr1$NewGenus[fieldtr1$SpeciesID==" p57sp4"]="Ficinia"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID==" p57sp4"]="stolonifera"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Crassula orbiculata"]="Crassula"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Crassula orbiculata"]="orbicularis"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Muraltia p56sp"]="Tetraria"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Muraltia p56sp"]="pleiosticha"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Pentamaris p98sp1"]="Psuedopentameris"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Pentamaris p98sp1"]="macrantha"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Pentaschistis p59sp3"]="Pentaschistis"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Pentaschistis p59sp3"]="colorata"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Plot12SP7 "]="Senecio"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Plot12SP7 "]="umbellatus"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Tetraria p55sp1"]="Tetraria"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Tetraria p55sp1"]="crassa"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Tetraria p63sp1"]="Tetraria"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Tetraria p63sp1"]="crassa"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Thesium p55sp3"]="Thesium"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Thesium p55sp3"]="nigromontanum"
-fieldtr1$NewGenus[fieldtr1$SpeciesID=="Thesium plot12Sp5"]="Thesium"
-fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Thesium plot12Sp5"]="acuminatum"    
 fieldtr1$NewGenus[fieldtr1$SpeciesID=="Watsonia "]="Watsonia"
 fieldtr1$NewSpecies[fieldtr1$SpeciesID=="Watsonia "]="tabularis" 
-
+#Duplicate Watsonia row
+fieldtr1[nrow(fieldtr1)+1,]=fieldtr1[fieldtr1$SpeciesID=="Watsonia ",]
+dim(fieldtr1)
+fieldtr1$NewSpecies[nrow(fieldtr1)]="meriana"
+  
 ###check to make sure all have been corrected
 fieldtr1[is.na(fieldtr1$NewGenus)==T,]
 nrow(fieldtr1[is.na(fieldtr1$NewGenus)==T,])  #1
 
-#Exclude one problematic row (IDed only to family)
+#Exclude one problematic row ("Plot70sp1" was IDed only to family)
 fieldtr2=fieldtr1[is.na(fieldtr1$NewGenus)==F,]  
 dim(fieldtr2)
-
-#Duplicate Watsonia row
-fieldtr2[nrow(fieldtr2)+1,]=fieldtr2[fieldtr2$SpeciesID=="Watsonia ",]
-dim(fieldtr2)
-fieldtr2$NewSpecies[nrow(fieldtr2)]="meriana"
 
 ###check to make sure all have been corrected
 fieldtr2[is.na(fieldtr2$NewGenus)==T,]
 nrow(fieldtr2[is.na(fieldtr2$NewGenus)==T,])  #0
+
+##Exclude seasonally apparent species
+fieldtr2<-fieldtr2[-which(fieldtr2[,1]%in%seas[,1]),]
 
 ##Write corrected file
 write.csv(fieldtr2, "Data/20110329_FieldData_namescorrected.csv", row.names=F)
@@ -132,48 +123,13 @@ iso1[is.na(iso1$NewGenus)==T,]
 
 iso1$NewGenus=as.character(iso1$NewGenus)
 iso1$NewSpecies=as.character(iso1$NewSpecies)
-iso1$NewGenus[iso1$Species=="X p57sp1"]="Syncarpha"
-iso1$NewSpecies[iso1$Species=="X p57sp1"]="speciosissima"
-iso1$NewGenus[iso1$Species=="X p57sp2"]="Tetraria"
-iso1$NewSpecies[iso1$Species=="X p57sp2"]="sylvatica"
-iso1$NewGenus[iso1$Species=="X p57sp3"]="Tetraria"
-iso1$NewSpecies[iso1$Species=="X p57sp3"]="cuspidata"
-iso1$NewGenus[iso1$Species=="X p57sp4"]="Ficinia"
-iso1$NewSpecies[iso1$Species=="X p57sp4"]="stolonifera"
-iso1$NewGenus[iso1$Species=="Crassula orbiculata"]="Crassula"
-iso1$NewSpecies[iso1$Species=="Crassula orbiculata"]="orbicularis"
-iso1$NewGenus[iso1$Species=="Muraltia p56sp"]="Tetraria"
-iso1$NewSpecies[iso1$Species=="Muraltia p56sp"]="pleiosticha"
-iso1$NewGenus[iso1$Species=="Pentamaris p98sp1"]="Psuedopentameris"
-iso1$NewSpecies[iso1$Species=="Pentamaris p98sp1"]="macrantha"
-iso1$NewGenus[iso1$Species=="Pentaschistis p59sp3"]="Pentaschistis"
-iso1$NewSpecies[iso1$Species=="Pentaschistis p59sp3"]="colorata"
-iso1$NewGenus[iso1$Species=="Plot12SP7 "]="Senecio"
-iso1$NewSpecies[iso1$Species=="Plot12SP7 "]="umbellatus"
-iso1$NewGenus[iso1$Species=="Tetraria p55sp1"]="Tetraria"
-iso1$NewSpecies[iso1$Species=="Tetraria p55sp1"]="crassa"
-iso1$NewGenus[iso1$Species=="Tetraria p63sp1"]="Tetraria"
-iso1$NewSpecies[iso1$Species=="Tetraria p63sp1"]="crassa"
-iso1$NewGenus[iso1$Species=="Thesium p55sp3"]="Thesium"
-iso1$NewSpecies[iso1$Species=="Thesium p55sp3"]="nigromontanum"
-iso1$NewGenus[iso1$Species=="Thesium plot12Sp5"]="Thesium"
-iso1$NewSpecies[iso1$Species=="Thesium plot12Sp5"]="acuminatum"    
-iso1$NewGenus[iso1$Species=="Stoebe cyathuloides"]="Stoebe"
-iso1$NewSpecies[iso1$Species=="Stoebe cyathuloides"]="cyathuloides"
-iso1$NewGenus[iso1$Species=="Syncharpha gnaphaloides"]="Syncarpha"
-iso1$NewSpecies[iso1$Species=="Syncharpha gnaphaloides"]="gnaphaloides"
-iso1$NewGenus[iso1$Species=="Ficinia p12sp4"]="Ficinia"
-iso1$NewSpecies[iso1$Species=="Ficinia p12sp4"]="bulbosa"
-iso1$NewGenus[iso1$Species=="Watsonia sp"]="Watsonia"
-iso1$NewSpecies[iso1$Species=="Watsonia sp"]="meriana"
 
-
-###check to make sure all have been corrected
-iso1[is.na(iso1$NewGenus)==T,]
-
-#Exclude one problematic row (IDed only to family)
+#Exclude one problematic row ("Plot70sp1" was IDed only to family)
 iso2=iso1[is.na(iso1$NewGenus)==F,]  
 dim(iso2)
+
+##Exclude seasonally apparent species
+iso2<-iso2[-which(iso2[,1]%in%seas[,1]),]
 
 write.csv(iso2, "Data/isotopes_namescorrected.csv", row.names=F)
 
