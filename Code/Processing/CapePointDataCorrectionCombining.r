@@ -242,7 +242,7 @@ alltr=subset(alltr, select=c("Collector","GardenField","Date","Sample","Replicat
   "RawLeafArea_cm2","LeafLength_cm","AvgLeafWidth_cm","MaxLeafWidth_cm","LeafThickness_mm",
   "RawLeafFresh_g","RawLeafDry_g","TwigFresh_g","TwigDry_g","SLA","LeafSucculence","TwigSucculence"))
 
-#Exclude 28 specimens with no lab data
+#Exclude 7 specimens with no lab data
 alltr=alltr[!is.na(alltr$Collector),]
 
 dim(alltr)
@@ -296,7 +296,7 @@ write.csv(labdt, "Data/LabData.csv",row.names=F)
  
 ########### Traits by Species Dataframe ############
 ####################################################
-
+## NOTE: If you want to flag & exclude errors, run the errorflags.r script instead of this part
 
 tr=read.csv("Data/20110329_FieldData_namescorrected.csv")
 head(tr)
@@ -430,7 +430,7 @@ dim(isomean)
 #There is one extra species in field data
 meanscheck=paste(means$Genus, means$Species)
 mxcheck=paste(mx$Genus, mx$Species)
-mxcheck[mxcheck %in% meanscheck==F]  # Cussonia thyrsifolia; I am just going to exclude this...
+mxcheck[mxcheck %in% meanscheck==F]  # Cussonia thyrsiflora; I am just going to exclude this...
 
 #Mismatch between isotope data and lab data
 isocheck=paste(isomean$Genus, isomean$Species)
@@ -446,9 +446,9 @@ grw1check=paste(grw1$Genus, grw1$Species)
 length(grw1check)
 length(unique(grw1check))
 grw1[duplicated(grw1check)==T,]
-grw1[grw1$Genus=="Erica" & grw1$Species=="hispidula",]  # remove duplicated
-grw1[grw1$Genus=="Ficinia" & grw1$Species=="filiformis",] #remove duplicated
-grw1[grw1$Genus=="Zygophyllum" & grw1$Species=="spinosum",] # Regeneration value differs between these two
+grw1[grw1$Genus=="Erica" & grw1$Species=="hispidula",]  #ok to remove row with NAs; no conflicts in values
+grw1[grw1$Genus=="Ficinia" & grw1$Species=="filiformis",] #no conflicts in values; ok to remove duplicate
+grw1[grw1$Genus=="Zygophyllum" & grw1$Species=="spinosum",] # Regeneration value differs between these two, so there is still a conflict
 # Remove duplicates
 grw2=grw1[duplicated(grw1check)==F,]
 
