@@ -292,6 +292,10 @@ labdt[labdt$LeafThickness_mm==146,]
 labdt$LeafThickness_mm[labdt$LeafThickness_mm==146]=.146
 labdt[labdt$LeafThickness_mm==.146,]
 
+labdt[which(labdt$BranchingOrder>4),]
+labdt$BranchingOrder[which(labdt$BranchingOrder>4)]=NA
+labdt[which(labdt$BranchingOrder>4),]
+
 write.csv(labdt, "Data/LabData.csv",row.names=F)
  
 ########### Traits by Species Dataframe ############

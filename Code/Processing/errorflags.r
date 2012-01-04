@@ -98,9 +98,7 @@ labdt$LeafFresh_g[grepl("LeafSucculence greater than 100%", labdt$Error)==T]=NA
 labdt$RawLeafDry_g[grepl("LeafSucculence greater than 100%", labdt$Error)==T]=NA
 labdt$LeafDry_g[grepl("LeafSucculence greater than 100%", labdt$Error)==T]=NA
 labdt$LeafSucculence[grepl("LeafSucculence greater than 100%", labdt$Error)==T]=NA
-labdt$RawTwigFresh_g[grepl("TwigSucculence greater than 100%", labdt$Error)==T]=NA
 labdt$TwigFresh_g[grepl("TwigSucculence greater than 100%", labdt$Error)==T]=NA
-labdt$RawTwigDry_g[grepl("TwigSucculence greater than 100%", labdt$Error)==T]=NA
 labdt$TwigDry_g[grepl("TwigSucculence greater than 100%", labdt$Error)==T]=NA
 labdt$TwigSucculence[grepl("TwigSucculence greater than 100%", labdt$Error)==T]=NA
 
