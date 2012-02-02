@@ -179,6 +179,13 @@ mold=rename.vars(mold, from="value", to="AbunClass")
 #merge old & new
 releve2=merge(releve,mold,by=c("Year","Plot","NewGenus","NewSpecies"),all=T)
 
+#Reclassify 2010 abundance
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun<=4]=1
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=5 & releve2$TotalAbun<=10]=2
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=11 & releve2$TotalAbun<=50]=3
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=51 & releve2$TotalAbun<=100]=4
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=101]=5
+
 releve2=subset(releve2, select=c("Year","Plot","NewGenus","NewSpecies","MeanPercCov","TotalAbun","AbunClass"))
 
 write.csv(releve2, "Data/ReleveAll.csv")
