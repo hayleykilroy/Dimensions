@@ -1,248 +1,33 @@
-setwd("C:/Work/Cape Point Data/2010survey/FinalData")
+setwd("C:/Work/Dimensions/Data")
 library(reshape)
 library(lattice)
 
-##Preliminary
+##Read in data
 
-tr=read.csv("Traits/SpeciesTraits_ErrorFlagsExcluded.csv") #Once traits.r is edited to better exclude errors, then use new file here
-pl=read.csv("Veg/ReleveQuadrat2010.csv")
-
-#pl=read.csv("Veg/ReleveQuadrat2010.csv", stringsAsFactors=F)
-#str(pl)
-#pl$H_N=as.integer(pl$H_N)
-#head(pl)
-#str(pl)
-#write.csv(pl, "Veg/ReleveQuadrat2010.csv", row.names=F)
-
-head(tr)
-head(pl)
-
-##############Dealing with Synonyms###############
-syn=read.csv("C:/Work/Cape Point Data/Synonyms/CapePointSynonyms.csv")
-
-pl$SpeciesID=paste(pl$Genus, pl$Species)
-tr$SpeciesID=paste(tr$Genus, tr$Species)
-syn$SpeciesID=paste(syn$OldGenus, syn$OldSpecies)
-
-head(syn)
-syn1=subset(syn, select=c("SpeciesID", "NewGenus", "NewSpecies"))
-head(syn1)
-
-tr1=merge(tr, syn1, by="SpeciesID", all.x=T, all.y=F)
-head(tr1)
-summary(tr1)
-
-###correct NAs
-tr1[is.na(tr1$NewGenus)==T,]
-
-##Check if missing species is in releve data
-#pl[grepl("Plot70", pl$SpeciesID)==T,]
-#pl[pl$SpeciesID=="Pentaschistis macrocalycina",]
-
-tr1$NewGenus[tr1$SpeciesID=="Cynodon dactylon"]="Cynodon"
-tr1$NewSpecies[tr1$SpeciesID=="Cynodon dactylon"]="dactylon"
-tr1$NewGenus[tr1$SpeciesID=="Pentaschistis "]="Pentaschistis"
-tr1$NewSpecies[tr1$SpeciesID=="Pentaschistas "]=""
-tr1$NewGenus[tr1$SpeciesID=="Stilbe ericoides"]="Stilbe"
-tr1$NewSpecies[tr1$SpeciesID=="Stilbe ericoides"]="ericoides"
-tr1$NewGenus[tr1$SpeciesID=="Syncarpha speciosissimum"]="Syncarpha"
-tr1$NewSpecies[tr1$SpeciesID=="Syncarpha speciosissimum"]="speciosissima"
-tr1$NewGenus[tr1$SpeciesID=="Thesium nigromontanum"]="Thesium"
-tr1$NewSpecies=factor(tr1$NewSpecies, levels=c(levels(tr1$NewSpecies), "nigromontanum"))
-tr1$NewSpecies[tr1$SpeciesID=="Thesium nigromontanum"]="nigromontanum"
-
-
-### correct missing values
-tr1[tr1$NewGenus=="",]
-
-tr1$NewGenus=as.character(tr1$NewGenus)
-tr1$NewSpecies=as.character(tr1$NewSpecies)
-
-tr1$NewGenus[tr1$NewGenus==""]=as.character(tr1$Genus[tr1$NewGenus==""])
-tr1$NewSpecies[tr1$NewGenus==""]=as.character(tr1$Species[tr1$NewGenus==""])
-
-tr1$NewGenus=as.factor(tr1$NewGenus)
-tr1$NewSpecies=as.factor(tr1$NewSpecies)
+tr1=read.csv("Data/SpeciesTraits_ErrorsExcluded.csv")
+pl1=read.csv("Data/ReleveQuadrat2010_NamesCorrected.csv")
 
 head(tr1)
-summary(tr1)
-str(tr1)
-
-##
-tr1$NewSpeciesID=paste(tr1$NewGenus, tr1$NewSpecies)
-
-
-
-##Plot Synonymy
-head(pl)
-pl1=merge(pl, syn1, by="SpeciesID", all.x=T, all.y=F)
 head(pl1)
-summary(pl1)
 
 pl1$NewSpeciesID=paste(pl1$NewGenus, pl1$NewSpecies)
-summary(pl1)
-pl1$NewSpeciesID=as.factor(pl1$NewSpeciesID)
-summary(pl1$NewSpeciesID)
-pl1$NewSpeciesID=as.character(pl1$NewSpeciesID)
-pl1$NewSpeciesID[pl1$NewSpeciesID=="NA NA"]=pl1$SpeciesID[pl1$NewSpeciesID=="NA NA"]
-
-##Fixing Details
-tr1$NewSpeciesID=sub("  ", " ", tr1$NewSpeciesID)
-pl1$NewSpeciesID=sub("  ", " ", pl1$NewSpeciesID)
-tr1$NewSpeciesID[tr1$NewSpeciesID=="Pentaschistis NA"]="Pentaschistis "
-tr1$NewSpeciesID[tr1$NewSpeciesID=="Chondropetalum nudum"]="Elegia nuda"
-tr1$NewSpeciesID[tr1$NewSpeciesID=="NA NA"]=tr1$SpeciesID[tr1$NewSpeciesID=="NA NA"]
-pl1[pl1$NewSpeciesID==" ",]
-pl1$NewSpeciesID[pl1$NewSpeciesID==" "]="Gnidia juniperina"
-pl1$NewSpeciesID[pl1$NewSpeciesID==" Erica muscosa"]="Erica muscosa"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Asparagus (Protasparagus) rubicundus"]="Asparagus rubicundus"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Capelio (Alciope) tabularis"]="Capelio tabularis"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Anaxaeton laeve"]="Anaxeton laeve"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Authospermiun galioides"]="Anthospermum galioides"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Authospermum galioides"]="Anthospermum galioides"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Callumia setosa"]="Cullumia setosa"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Campianthus falsiformis"]="Lampranthus falciformis"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Corumbium glabrum"]="Corymbium glabrum"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Crassula sp. minute imbricate leaves"]="Crassula "
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Disparago aricoides"]="Disparago ericoides"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Disparago ericoides (lasiocarpa)"]="Disparago ericoides"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Elegia (Chondropetalum) microcarpum"]="Elegia microcarpa"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Elegia (Chondropetalum) nuda"]="Elegia nuda"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Elegia nudug"]="Elegia nuda"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Chondropetalum nudum"]="Elegia nuda"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Erharta ramosa"]="Ehrharta ramosa"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Erica abietina ssp. atrorosea"]="Erica abietina"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Erica allabella"]="Erica glabella"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Erica galabella"]="Erica glabella"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="erica hirtiflora"]="Erica hirtiflora"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Erica paliiflora"]="Erica palliflora"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Finia rigida"]="Ficinia rigida"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Ischyrolepis palludosa"]="Ischyrolepis paludosa"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Lachnaea (Cryptadenia) grandiflora"]="Lachnaea grandiflora"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Lachnaea densifolia"]="Lachnaea densiflora"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Manulea cheilanthes"]="Manulea cheiranthes"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Microdon dubia"]="Microdon dubius"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Microndon dubius"]="Microdon dubius"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Microdon (Agathelpis) dubius"]="Microdon dubius"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Muraltia sp. Prev. Lapa"]="Muraltia "
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Passerina corymbos (vulgaris)"]="Passerina corymbosa"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Passerina corymbosa (vulgaris)"]="Passerina corymbosa"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Ploygala bracteolata"]="Polygala bracteolata"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Pseudognaphalium spuria"]="Pseudoselago spuria"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Restio (Calopsis) ramosissimus (gracilis)"]="Calopsis gracilis"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Restio (Ischyrolepis) capensis"]="Ischyrolepis capensis"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Restio (Ischyrolepis) cincinnata"]="Ischyrolepis cincinnata"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Restio (Ischyrolepis) cincinnatus"]="Ischyrolepis cincinnata"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Restio capensis"]="Ischyrolepis capensis"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Rhus laevigata"]="Searsia chirindensis"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Robsonodendron maritinum"]="Robsonodendron maritimum"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Safgria odorum"]="Satyrium odorum"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Shizaea pectinata"]="Schizaea pectinata"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Stylapteris fruticulosus"]="Stylapterus fruticulosus"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Tetraria pleiosticha"]="Tetraria fasciata"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Trichocephalus (Phylica) stipularis"]="Trichocephalus stipularis"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Trichogyne (Ifloga) ambigua"]="Trichogyne ambigua"
-pl1$NewSpeciesID[pl1$NewSpeciesID=="Willdnowia glomerata"]="Willdenowia glomerata"
-
-head(tr1)
-head(pl1)
-
-
-##Checking
-sp_p=unique(pl1$NewSpeciesID)
-sp_p
-sp_t=unique(tr1$NewSpeciesID)
-sp_t
-
-allsp=matrix(nrow=length(unique(c(sp_p, sp_t))), ncol=3)
-colnames(allsp)=c("Species", "Plots", "Traits")
-allsp=as.data.frame(allsp)
-allsp$Species=unique(c(sp_p, sp_t))
-allsp$Plots=allsp$Species%in%sp_p
-allsp$Traits=allsp$Species%in%sp_t
-head(allsp)
-summary(allsp)
-
-allsp_p=allsp[allsp$Plots==T,]
-
-noplot=allsp$Species[allsp$Plots==F]
-notrait=allsp$Species[allsp$Traits==F]
-
-write.csv(noplot, "noplot.csv")
-write.csv(notrait, "notrait.csv")
-
-tr1$NewSpeciesID[grepl("Erica", tr1$NewSpeciesID)==T]
-tr1$NewSpeciesID[grepl("eucomoides", tr1$NewSpeciesID)==T]
-
-tr1$NewSpeciesID[tr1$NewSpeciesID=="Paraspalathus callosa"]
-
-#Checking old surveys
-pall=read.csv("Veg/ReveleAll.csv")
-head(pall)
-pall$SpeciesID=paste(pall$Genus, pall$Species)
-
-pall=merge(pall, syn1, by="SpeciesID", all.x=T, all.y=F)
-head(pall)
-summary(pall)
-
-pall$NewSpeciesID=paste(pall$NewGenus, pall$NewSpecies)
-summary(pall)
-pall$NewSpeciesID=as.factor(pall$NewSpeciesID)
-summary(pall$NewSpeciesID)
-pall$NewSpeciesID=as.character(pall$NewSpeciesID)
-pall$NewSpeciesID[pall$NewSpeciesID=="NA NA"]=pall$SpeciesID[pall$NewSpeciesID=="NA NA"]
-
-
-sp_p=unique(pall$NewSpeciesID)
-sp_p
-sp_t=unique(tr1$NewSpeciesID)
-sp_t
-
-allsp=matrix(nrow=length(unique(c(sp_p, sp_t))), ncol=3)
-colnames(allsp)=c("Species", "Plots", "Traits")
-allsp=as.data.frame(allsp)
-allsp$Species=unique(c(sp_p, sp_t))
-allsp$Plots=allsp$Species%in%sp_p
-allsp$Traits=allsp$Species%in%sp_t
-head(allsp)
-summary(allsp)
-
-#allsp_p=allsp[allsp$Plots==T,]
-
-noplot=allsp$Species[allsp$Plots==F]
-#notrait=allsp$Species[allsp$Traits==F]
-
-write.csv(noplot, "noplot.csv")
-#write.csv(notrait, "notrait.csv")
-
-tr1$NewSpeciesID[grepl("Restio", tr1$NewSpeciesID)==T]
-unique(pall$NewSpeciesID[grepl("Gnidia", pall$NewSpeciesID)==T])
-
-##Write corrected files
-write.csv(tr1, "Traits/SpeciesTraits_namescorrected_errorsexcluded.csv", row.names=F)
-write.csv(pl1, "Veg/ReleveQuadrat2010_namescorrected.csv", row.names=F)
-
-
-#############################################
-tr1=read.csv("Traits/SpeciesTraits_namescorrected_errorsexcluded.csv")
-pl1=read.csv("Veg/ReleveQuadrat2010_namescorrected.csv")
-
 
 ###Two ways to normalize cover--by plot & by quadrat
 pl1[is.na(pl1)==T]=0
 head(pl1)
 
 ##by plot
+
 #Add total cover (across all 10 quadrats)
 pl1$TotCov=(pl1$A_PercCov+pl1$B_PercCov+pl1$C_PercCov+pl1$D_PercCov+pl1$E_PercCov+pl1$F_PercCov+pl1$G_PercCov+pl1$H_PercCov+pl1$I_PercCov+pl1$J_PercCov)/10
 head(pl1)
+
 #normalize cover
 plottotcov=matrix(nrow=length(unique(pl1$Plot)), ncol=1)
 for (i in 1:length(unique(pl1$Plot))){
   plottotcov[i]=sum(pl1$TotCov[pl1$Plot==(unique(pl1$Plot)[i])])
   }
 summary(plottotcov)
-
 
 plottotcov1=cbind(unique(pl1$Plot), plottotcov)
 colnames(plottotcov1)=c("Plot","TotalCover")
@@ -262,51 +47,29 @@ spabun_pn$WghtedCov=spabun_pn$TotCov/spabun_pn$PlotTotCov
 head(spabun_pn)
 summary(spabun_pn)
 
-
-#for (i in 1:length(unique(pl1$Plot))){
-#spabun_pn=cbind(pl1[,c("Plot","Genus","Species")],comagabund=pl1$TotCov/plottotcov1[plottotcov1[,1]==(unique(pl1$Plot)[i]),2]) 
-#}
-#head(spabun_pn)
-
-#spabun_pn$SpeciesID=paste(spabun_pn$Genus, spabun_pn$Species)
-
 spabun_plot=cast(spabun_pn, Plot~NewSpeciesID, value="WghtedCov")
 head(spabun_plot)
 summary(spabun_plot)
 
-#max(spabun_plot)  #should be 1
-#ind=which(spabun_plot==4, arr.ind=T)
-#spabun_plot[ind[,1], ind[,2]]
-#spabun_pn[spabun_pn$NewSpeciesID=="Adenandra villosa",]
-#pl1[pl1$NewSpeciesID=="Adenandra villosa",]
-
-##by quadrat
-#quadcov=matrix(nrow=length(unique(pl1$Plot)), ncol=10)
-#colnames(quadcov)=grep("PercCov",colnames(pl1), value=T)
-#colnames(quadcov)
-#for (i in 1:nrow(quadcov)){
-#for (j in 1:ncol(quadcov)){
-#  quadcov[i,j]=sum(pl1[pl1$Plot==(unique(pl1$Plot)[i]), colnames(quadcov)[j]])
-#  }}
-
-#colnames(quadcov)=paste(colnames(quadcov), "Tot", sep="_")
-
-
+# check
 table(rowSums(spabun_plot, na.rm=T)) #should all be 1
+
+
 
 
 #### Percent of plot made up of species with no trait data
 sp_p=colnames(spabun_plot[2:length(colnames(spabun_plot))])
 sp_p
-sp_t=as.character(tr1$NewSpeciesID)
+tr1$SpeciesID=paste(tr1$Genus, tr1$Species)
+sp_t=as.character(tr1$SpeciesID)
 sp_t
 
 allsp=matrix(nrow=length(unique(c(sp_p, sp_t))), ncol=3)
 colnames(allsp)=c("Species", "Plots", "Traits")
 allsp=as.data.frame(allsp)
 allsp$Species=unique(c(sp_p, sp_t))
-allsp$Plots=allsp$Species%in%sp_p
-allsp$Traits=allsp$Species%in%sp_t
+allsp$Plots=allsp$Species%in%sp_p  # Is species in 2010 releve data- T/F?
+allsp$Traits=allsp$Species%in%sp_t # Is species in trait data- T/F?
 head(allsp)
 summary(allsp)
 
@@ -314,6 +77,7 @@ summary(allsp)
 notrait=allsp$Species[allsp$Traits==F]
 notrait
 
+#Percentage of each plot that is species with no trait data
 nodataperc=subset(spabun_plot, select=notrait)
 nodataperc1=rowSums(nodataperc, na.rm=T)
 nodataperc1
@@ -324,19 +88,6 @@ nodataperc2
 nodataperc2=nodataperc2[order(nodataperc2[,2]),]
 
 
-
-nodataperc2[38,]
-nodataperc2[36,]
-
-plot49=spabun_plot[spabun_plot$Plot==49,]
-plot49=subset(plot49, select=notrait)
-plot49=plot49[,is.na(plot49)==F]
-
-plot47=spabun_plot[spabun_plot$Plot==47,]
-plot47=subset(plot47, select=notrait)
-plot47=plot47[,is.na(plot47)==F]
-
-
 ##### Plot x Species Matrix - Renormalized to Exclude Species w/o Trait Data
 colnames(nodataperc2)=c("Plot", "PercNA")
 dim(nodataperc2)
@@ -345,7 +96,9 @@ dim(spabun_plot)
 spabun_plot1=merge(spabun_plot, nodataperc2, by="Plot")
 head(spabun_plot1)
 
-# Exlude plots with more than 10% of cover of species w/no trait data
+
+# Exlude plots with more than 10% of cover from species w/no trait data   <- This is 8 plots out of 67
+# (If we excluded plots with more than 20% of cover from species which we don't have trait data for, it would be 1 plot out of 67
 spa=spabun_plot1[spabun_plot1$PercNA<0.10,]
 dim(spa)
 head(spa)
@@ -360,74 +113,42 @@ rowSums(spa[2:ncol(spa)], na.rm=T)  #should all be 1
 
 # Get trait data ready for matrix multiplication
 head(tr1)
-sp_spa=as.character(tr1$NewSpeciesID[tr1$NewSpeciesID%in%colnames(spa)==T])
+sp_spa=as.character(tr1$SpeciesID[tr1$SpeciesID%in%colnames(spa)==T])
 sp_spa=unique(sp_spa)
 sp_spa
 length(sp_spa)
 dim(spa)
-tr1$NewSpeciesID=as.character(tr1$NewSpeciesID)
-tr2=tr1[tr1$NewSpeciesID%in%sp_spa==T,]
+tr1$SpeciesID=as.character(tr1$SpeciesID)
+tr2=tr1[tr1$SpeciesID%in%sp_spa==T,]
 head(tr2)
-tr2=tr2[order(tr2$NewSpeciesID),]
+tr2=tr2[order(tr2$SpeciesID),]
 head(tr2)
 
-mult=table(tr2$NewSpeciesID)
-mult=mult[mult>1]
-mult
-mult=as.matrix(mult)
-
-colnames(tr2)[5:8]=paste(colnames(tr2)[5:8],"_Mean", sep="")
-
-tr2[tr2$NewSpeciesID=="Coleonema album",]
-tr2[tr2$NewSpeciesID=="Disparago ericoides",]
-tr2[tr2$NewSpeciesID=="Erica labialis",]
-tr2[tr2$NewSpeciesID=="Syncarpha speciosissima",]
-tr2[tr2$NewSpeciesID=="Erica hispidula",]
-tr2[tr2$NewSpeciesID=="Zygophyllum spinosum",]
-
-trm=tr2[tr2$NewSpeciesID%in%row.names(mult)==T,]
-trm
-
-#arbitrarily pick a row for each duplicate...
-
-#trm2=trm[c(1,3,6,8,10,12),]
-#trm2
-
-#edit duplicates in excel
-write.csv(trm2, file="duplicates.csv", row.names=F)
-
-tr3=tr2[tr2$NewSpeciesID%in%c("Coleonema album","Disparago ericoides","Erica abietina","Syncarpha speciosissima","Erica hispidula","Zygophyllum spinosum")==F,]
-tr3=rbind(tr3,trm2)
+# Select traits to be multiplied
+tr3=subset(tr2, select=c("SpeciesID", "LeafLength_cm_Mean", "AvgLeafWidth_cm_Mean", "MaxLeafWidth_cm_Mean", 
+          "LeafThickness_mm_Mean", "SLA_Mean", "LeafSucculence_Mean", "TwigSucculence_Mean", "Height_cm_Max", 
+          "CanopyX_cm_Max", "CanopyY_cm_Max", "PercN", "PercC", "C.N_ratio"))
 head(tr3)
 dim(tr3)
-dim(spa)
-tr3=tr3[order(tr3$NewSpeciesID),]
-
 head(spa)
-head(tr3)
+dim(spa) # Number of columns should be one more than number of rows in tr3
 
+# Replace NAs in species abundance matrix with 0s
 spa2=spa
 spa2[is.na(spa2)==T]=0
 
-trcat=tr3[,10:24]
-head(trcat)
-dim(trcat)
-str(trcat)
-
-spacat=spa2[,2:ncol(spa2)]
-head(spacat)
-dim(spacat)
-str(spacat)
-
+trcat=tr3[,2:ncol(tr3)]
 trcat=as.matrix(trcat)
 head(trcat)
 dim(trcat)
 str(trcat)
 
-#Excluding NAs--this is problematic!!! NAs can't just be zeros
+spacat=spa2[,2:ncol(spa2)]
+spacat=as.matrix(spacat)
+
+#Excluding NAs--this is problematic!!! NAs can't just be zeros - should re-normalize species abundance to exclude NAs for each variable
 trcat[is.na(trcat)==T]=0
 
-spacat=as.matrix(spacat)
 
 catm=spacat%*%trcat
 head(catm)
@@ -435,50 +156,208 @@ dim(catm)
 summary(catm)
 
 catm=as.data.frame(catm)
-
-hist(catm$SLA_Mean)
-
-catm2=catm[,c(2:6, 9:10, 13:15)]
-head(catm2)
-
-catm2=cbind(spa$Plot, catm2)
+catm2=cbind(spa$Plot, catm)
 colnames(catm2)[1]="Plot"
 
+# Look at distribution of traits across plots
+hist(catm2$LeafLength_cm_Mean)  # slightly right skewed
+hist(catm2$AvgLeafWidth_cm_Mean) # right skewed, potential outlier
+hist(catm2$MaxLeafWidth_cm_Mean)  #slightly right skewed
+hist(catm2$LeafThickness_mm_Mean)  #right skewed
+hist(catm2$SLA_Mean)               #looks normalish
+hist(catm2$LeafSucculence_Mean)  #left skewed
+hist(catm2$TwigSucculence_Mean)   #normal
+hist(catm2$Height_cm_Max)      #right skewed
+hist(catm2$CanopyX_cm_Max)    # right skewed, potential outlier
+hist(catm2$CanopyY_cm_Max)    # heavily right skewed (Poisson)
+hist(catm2$PercN)           #right skewed
+hist(catm2$PercC)          # left skewed, potential outlier
+hist(catm2$C.N_ratio)      #normal
+
+write.csv(catm2, "Data/CAT_byPlot.csv", row.names=F)
+
+
 ##### By Plot Env Factors
-env=read.csv("Env/PlotDescription.csv")
+catm2=read.csv("Data/CAT_byPlot.csv")
+env=read.csv("PreprocessedData/PlotDescription.csv")
 head(env)
 
-env1=env[,c(1:4)]
+#Subset plot env columns; combine center depth measurements
+env1=env[,c(1:5)]
 head(env1)
+env1$Depth_Center_m[is.na(env1$Depth_Center_m)==T]=env$Depth_Center_cm[is.na(env1$Depth_Center_m)==T]/100
+#Create slope/aspect metrics
+env1$eastwestness=sin(env1$Slope*pi/180)*cos(env1$Aspect*pi/180)
+env1$northsouthness=sin(env1$Slope*pi/180)*sin(env1$Aspect*pi/180)
+env1$slopetransformed=sin(env1$Slope*pi/180)
+
 
 catm2=merge(catm2, env1, by="Plot")
 head(catm2)
 
-par(mfrow=c(2,3))
-
 catm2$Moisture=as.factor(catm2$Moisture)
 
-boxplot(catm2$SLA_Mean~catm2$Moisture, varwidth=T, notch=T)
-boxplot(catm2$Moisture, catm2$LeafArea_cm2_Mean)
-boxplot(catm2$Moisture, catm2$MaxLeafWidth_cm_Mean)
-boxplot(catm2$Moisture, catm2$LeafThickness_mm_Mean)
-boxplot(catm2$Moisture, catm2$TwigSucculence_Mean)
-boxplot(catm2$Moisture, catm2$LeafSucculence_Mean)
 
-plot(catm2$Slope, catm2$SLA_Mean)
-plot(catm2$Slope, catm2$LeafArea_cm2_Mean)
-plot(catm2$Slope, catm2$MaxLeafWidth_cm_Mean)
-plot(catm2$Slope, catm2$LeafThickness_mm_Mean)
-plot(catm2$Slope, catm2$TwigSucculence_Mean)
-plot(catm2$Slope, catm2$LeafSucculence_Mean)
+## Plots
+
+# Plots for each variable in a pdf
+par(mfrow=c(2,2))
+
+pdf(file="C:/Work/Dimensions/Code/HayleyAnalysis/Figures/commagg.pdf", paper="letter")
+par(mfrow=c(2,2))
+
+boxplot(LeafLength_cm_Mean~Moisture, data=catm2, xlab="Plot Moisture Category", ylab="Abundance-Weighted Mean Leaf Length (cm)")
+#plot(catm2$Slope,catm2$LeafLength_cm_Mean, xlab="Slope of Plot", ylab="Abundance-Weighted Mean Leaf Length (cm)") 
+#plot(catm2$Aspect,catm2$LeafLength_cm_Mean, xlab="Aspect of Plot", ylab="Abundance-Weighted Mean Leaf Length (cm)")
+plot(catm2$eastwestness, catm2$LeafLength_cm_Mean, xlab="East-Westness", ylab="Abundance-Weighted Mean Leaf Length (cm)") 
+plot(catm2$northsouthness, catm2$LeafLength_cm_Mean, xlab="North-Southness", ylab="Abundance-Weighted Mean Leaf Length (cm)")
+plot(catm2$slopetransformed, catm2$LeafLength_cm_Mean, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Leaf Length (cm)")
+plot(catm2$Depth_Center_m,catm2$LeafLength_cm_Mean, xlab="Soil Depth in Center of Plot (m)", ylab="Abundance-Weighted Mean Leaf Length (cm)")
+
+boxplot(AvgLeafWidth_cm_Mean~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean Avg. Leaf Width (cm)")
+#plot(catm2$Slope,catm2$AvgLeafWidth_cm_Mean, xlab="Slope of Plot",ylab="Abundance-Weighted Mean Avg. Leaf Width (cm)") 
+#plot(catm2$Aspect,catm2$AvgLeafWidth_cm_Mean, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean Avg. Leaf Width (cm)")
+plot(catm2$eastwestness, catm2$AvgLeafWidth_cm_Mean, xlab="East-Westness", ylab="Abundance-Weighted Mean Leaf Avg. Width (cm)") 
+plot(catm2$northsouthness, catm2$AvgLeafWidth_cm_Mean, xlab="North-Southness", ylab="Abundance-Weighted Mean Avg. Leaf Width (cm)")
+plot(catm2$slopetransformed, catm2$AvgLeafWidth_cm_Mean, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Avg. Leaf Width (cm)")
+plot(catm2$Depth_Center_m,catm2$AvgLeafWidth_cm_Mean, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean Avg. Leaf Width (cm)")
+
+boxplot(MaxLeafWidth_cm_Mean~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean Max Leaf Width (cm)")
+#plot(catm2$Slope,catm2$MaxLeafWidth_cm_Mean, xlab="Slope of Plot",ylab="Abundance-Weighted Mean Max Leaf Width (cm)") 
+#plot(catm2$Aspect,catm2$MaxLeafWidth_cm_Mean, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean Max Leaf Width (cm)")
+plot(catm2$eastwestness, catm2$MaxLeafWidth_cm_Mean, xlab="East-Westness", ylab="Abundance-Weighted Mean Max Leaf Width (cm)") 
+plot(catm2$northsouthness, catm2$MaxLeafWidth_cm_Mean, xlab="North-Southness", ylab="Abundance-Weighted Mean Max Leaf Width (cm)")
+plot(catm2$slopetransformed, catm2$MaxLeafWidth_cm_Mean, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Max Leaf Width (cm)")
+plot(catm2$Depth_Center_m,catm2$MaxLeafWidth_cm_Mean, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean Max Leaf Width (cm)")
+
+boxplot(LeafThickness_mm_Mean~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean Leaf Thickness (mm)")
+#plot(catm2$Slope,catm2$LeafThickness_mm_Mean, xlab="Slope of Plot",ylab="Abundance-Weighted Mean Leaf Thickness (mm)") 
+#plot(catm2$Aspect,catm2$LeafThickness_mm_Mean, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean Leaf Thickness (mm)")
+plot(catm2$eastwestness, catm2$LeafThickness_mm_Mean, xlab="East-Westness", ylab="Abundance-Weighted Mean Leaf Thickness (mm)") 
+plot(catm2$northsouthness, catm2$LeafThickness_mm_Mean, xlab="North-Southness", ylab="Abundance-Weighted Mean Leaf Thickness (mm)")
+plot(catm2$slopetransformed, catm2$LeafThickness_mm_Mean, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Leaf Thickness (mm)")
+plot(catm2$Depth_Center_m,catm2$LeafThickness_mm_Mean, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean Leaf Thickness (mm)")
+
+boxplot(SLA_Mean~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean SLA")
+#plot(catm2$Slope,catm2$SLA_Mean, xlab="Slope of Plot",ylab="Abundance-Weighted Mean SLA") 
+#plot(catm2$Aspect,catm2$SLA_Mean, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean SLA")
+plot(catm2$eastwestness, catm2$SLA_Mean, xlab="East-Westness", ylab="Abundance-Weighted Mean SLA") 
+plot(catm2$northsouthness, catm2$SLA_Mean, xlab="North-Southness", ylab="Abundance-Weighted Mean SLA")
+plot(catm2$slopetransformed, catm2$SLA_Mean, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean SLA")
+plot(catm2$Depth_Center_m,catm2$SLA_Mean, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean SLA")
+
+boxplot(LeafSucculence_Mean~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean Leaf Succulence")
+#plot(catm2$Slope,catm2$LeafSucculence_Mean, xlab="Slope of Plot",ylab="Abundance-Weighted Mean Leaf Succulence") 
+#plot(catm2$Aspect,catm2$LeafSucculence_Mean, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean Leaf Succulence")
+plot(catm2$eastwestness, catm2$LeafSucculence_Mean, xlab="East-Westness", ylab="Abundance-Weighted Mean Leaf Succulence") 
+plot(catm2$northsouthness, catm2$LeafSucculence_Mean, xlab="North-Southness", ylab="Abundance-Weighted Mean Leaf Succulence")
+plot(catm2$slopetransformed, catm2$LeafSucculence_Mean, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Leaf Succulence")
+plot(catm2$Depth_Center_m,catm2$LeafSucculence_Mean, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean Leaf Succulence")
+
+boxplot(TwigSucculence_Mean~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean Twig Succulence")
+#plot(catm2$Slope,catm2$TwigSucculence_Mean, xlab="Slope of Plot",ylab="Abundance-Weighted Mean Twig Succulence") 
+#plot(catm2$Aspect,catm2$TwigSucculence_Mean, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean Twig Succulence")
+plot(catm2$eastwestness, catm2$TwigSucculence_Mean, xlab="East-Westness", ylab="Abundance-Weighted Mean Twig Succulence") 
+plot(catm2$northsouthness, catm2$TwigSucculence_Mean, xlab="North-Southness", ylab="Abundance-Weighted Mean Twig Succulence")
+plot(catm2$slopetransformed, catm2$TwigSucculence_Mean, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Twig Succulence")
+plot(catm2$Depth_Center_m,catm2$TwigSucculence_Mean, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean Twig Succulence")
+
+boxplot(Height_cm_Max~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean Plant Height")
+#plot(catm2$Slope,catm2$Height_cm_Max, xlab="Slope of Plot",ylab="Abundance-Weighted Mean Plant Height") 
+#plot(catm2$Aspect,catm2$Height_cm_Max, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean Plant Height")
+plot(catm2$eastwestness, catm2$Height_cm_Max, xlab="East-Westness", ylab="Abundance-Weighted Mean Plant Height") 
+plot(catm2$northsouthness, catm2$Height_cm_Max, xlab="North-Southness", ylab="Abundance-Weighted Mean Plant Height")
+plot(catm2$slopetransformed, catm2$Height_cm_Max, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Plant Height")
+plot(catm2$Depth_Center_m,catm2$Height_cm_Max, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean Plant Height")
+
+boxplot(CanopyX_cm_Max~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean Canopy X Axis (cm)")
+#plot(catm2$Slope,catm2$CanopyX_cm_Max, xlab="Slope of Plot",ylab="Abundance-Weighted Mean Canopy X Axis (cm)") 
+#plot(catm2$Aspect,catm2$CanopyX_cm_Max, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean Canopy X Axis (cm)")
+plot(catm2$eastwestness, catm2$CanopyX_cm_Max, xlab="East-Westness", ylab="Abundance-Weighted Mean Canopy X Axis (cm)") 
+plot(catm2$northsouthness, catm2$CanopyX_cm_Max, xlab="North-Southness", ylab="Abundance-Weighted Mean Canopy X Axis (cm)")
+plot(catm2$slopetransformed, catm2$CanopyX_cm_Max, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Canopy X Axis (cm)")
+plot(catm2$Depth_Center_m,catm2$CanopyX_cm_Max, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean Canopy X Axis (cm)")
+
+boxplot(CanopyY_cm_Max~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean Canopy Y Axis (cm)")
+#plot(catm2$Slope,catm2$CanopyY_cm_Max, xlab="Slope of Plot",ylab="Abundance-Weighted Mean Canopy Y Axis (cm)") 
+#plot(catm2$Aspect,catm2$CanopyY_cm_Max, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean Canopy Y Axis (cm)")
+plot(catm2$eastwestness, catm2$CanopyY_cm_Max, xlab="East-Westness", ylab="Abundance-Weighted Mean Canopy Y Axis (cm)") 
+plot(catm2$northsouthness, catm2$CanopyY_cm_Max, xlab="North-Southness", ylab="Abundance-Weighted Mean Canopy Y Axis (cm)")
+plot(catm2$slopetransformed, catm2$CanopyY_cm_Max, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean Canopy Y Axis (cm)")
+plot(catm2$Depth_Center_m,catm2$CanopyY_cm_Max, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean Canopy Y Axis (cm)")
+
+boxplot(PercN~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean %Nitrogen")
+#plot(catm2$Slope,catm2$PercN, xlab="Slope of Plot",ylab="Abundance-Weighted Mean %Nitrogen") 
+#plot(catm2$Aspect,catm2$PercN, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean %Nitrogen")
+plot(catm2$eastwestness, catm2$PercN, xlab="East-Westness", ylab="Abundance-Weighted Mean %Nitrogen") 
+plot(catm2$northsouthness, catm2$PercN, xlab="North-Southness", ylab="Abundance-Weighted Mean %Nitrogen")
+plot(catm2$slopetransformed, catm2$PercN, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean %Nitrogen")
+plot(catm2$Depth_Center_m,catm2$PercN, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean %Nitrogen")
+
+boxplot(PercC~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean %Carbon")
+#plot(catm2$Slope,catm2$PercC, xlab="Slope of Plot",ylab="Abundance-Weighted Mean %Carbon") 
+#plot(catm2$Aspect,catm2$PercC, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean %Carbon")
+plot(catm2$eastwestness, catm2$PercC, xlab="East-Westness", ylab="Abundance-Weighted Mean %Carbon") 
+plot(catm2$northsouthness, catm2$PercC, xlab="North-Southness", ylab="Abundance-Weighted Mean %Carbon")
+plot(catm2$slopetransformed, catm2$PercC, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean %Carbon")
+plot(catm2$Depth_Center_m,catm2$PercC, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean %Carbon")
+
+boxplot(C.N_ratio~Moisture, data=catm2, xlab="Plot Moisture Category",ylab="Abundance-Weighted Mean C/N Ratio")
+#plot(catm2$Slope,catm2$C.N_ratio, xlab="Slope of Plot",ylab="Abundance-Weighted Mean C/N Ratio") 
+#plot(catm2$Aspect,catm2$C.N_ratio, xlab="Aspect of Plot",ylab="Abundance-Weighted Mean C/N Ratio")
+plot(catm2$eastwestness, catm2$C.N_ratio, xlab="East-Westness", ylab="Abundance-Weighted Mean C/N Ratio") 
+plot(catm2$northsouthness, catm2$C.N_ratio, xlab="North-Southness", ylab="Abundance-Weighted Mean C/N Ratio")
+plot(catm2$slopetransformed, catm2$C.N_ratio, xlab="Sin(Slope)", ylab="Abundance-Weighted Mean C/N Ratio")
+plot(catm2$Depth_Center_m,catm2$C.N_ratio, xlab="Soil Depth in Center of Plot (m)",ylab="Abundance-Weighted Mean C/N Ratio")
+
+dev.off()
 
 
-catl=melt(catm2, id.vars=c("Plot","Moisture","Slope", "Aspect"))
 
-pdf(file="C:/Work/Cape Point Data/2010survey/Rcode/Plots/commagg.pdf", paper="letter")
 
-bwplot(value~as.factor(Moisture)|variable, data=catl, varwidth=T, notch=T, scales=list(y=list(relation="free")), xlab="Plot Moisture", ylab="Community Aggregate Traits", layout=c(4,3))
 
-xyplot(value~Slope|variable, data=catl, varwidth=T, notch=T, scales=list(y=list(relation="free")), ylab="Community Aggregate Traits", xlab="Plot Slope", layout=c(4,3))
 
-xyplot(value~Aspect|variable, data=catl, varwidth=T, notch=T, scales=list(y=list(relation="free")), ylab="Community Aggregate Traits", xlab="Plot Aspect", layout=c(4,3))
+
+######## PCA Trait analysis
+pc.tr=princomp(catm)
+summary(pc.tr)
+loadings(pc.tr)
+
+# 1st axis - height, canopy x & y
+# 2nd axis - ?
+
+# linear regression with 1st axis
+pc.axis1=pc.tr$scores[,1]
+pc.axis1=as.numeric(pc.axis1)
+
+pcreg=lm(pc.axis1 ~ catm2$Moisture + catm2$Slope + catm2$Aspect + catm2$Depth_Center_m)
+summary(pcreg) # Nothing significant
+
+pcreg1=lm(pc.axis1 ~ catm2$Slope + catm2$Depth_Center_m)
+pcreg2=lm(pc.axis1 ~ catm2$Slope)
+
+summary(pcreg2) # Most significant model - not less than 0.05 though
+
+# PCA of leaf traits only
+pc.lf=princomp(subset(catm2, select=c("LeafLength_cm_Mean", "AvgLeafWidth_cm_Mean", "MaxLeafWidth_cm_Mean",
+                                "LeafThickness_mm_Mean", "SLA_Mean", "LeafSucculence_Mean")))
+summary(pc.lf)
+loadings(pc.lf)                                
+
+# 1st axis - Leaf Length & SLA
+
+lfax1=pc.lf$scores[,1]
+lfax1=as.numeric(lfax1)
+lfreg=lm(lfax1 ~ catm2$Moisture + catm2$Slope + catm2$Aspect + catm2$Depth_Center_m)
+summary(lfreg)
+
+lfreg1=lm(lfax1 ~ catm2$Moisture + catm2$Aspect + catm2$Depth_Center_m)
+summary(lfreg1)
+
+lfreg2=lm(lfax1 ~ catm2$Moisture + catm2$Aspect)
+summary(lfreg2)
+
+lfreg3=lm(lfax1 ~ catm2$Moisture)
+summary(lfreg3)
+
+# High moisture sites -> longer leaves, lower SLA

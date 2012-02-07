@@ -1,4 +1,6 @@
 *.*
+*~
 !*.r
 !*.R
 !.gitignore
+!MasterSynonymCorrections.xlsx
