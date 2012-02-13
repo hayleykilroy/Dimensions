@@ -3,12 +3,13 @@
 library(gregmisc)
 
 setwd("C:/Work/Dimensions/Data")
+#setwd("D:\\Jasper\\Side projects\\Taylor plots\\GitData\\Dimensions\\Data")
 
 ########### Flagging Errors ############
 ########################################
 
 # Read in lab data
-ld=read.csv("Data/LabData.csv", header=T)
+ld=read.csv("PostprocessedData/LabData.csv", header=T)
 head(ld)
 summary(ld)
 dim(ld)
@@ -56,7 +57,7 @@ ld$Error[which(ld$TwigSucculence>=100 & is.na(ld$Error)==F)]=paste(ld$Error[whic
 ld$Error[which(ld$TwigSucculence>=100 & is.na(ld$Error)==T)]="TwigSucculence greater than 100%"
 summary(as.factor(ld$Error))
 
-write.csv(ld, "Data/LabData_errorflags.csv", row.names=F)
+write.csv(ld, "PostprocessedData/LabData_errorflags.csv", row.names=F)
 
 
 ########### Traits by Species Dataframe ############
@@ -64,10 +65,10 @@ write.csv(ld, "Data/LabData_errorflags.csv", row.names=F)
 
 ## Note: this takes a very conservative approach to dealing with errors, and excludes anything that is flagged as a potential error
 
-tr=read.csv("Data/20110329_FieldData_namescorrected.csv")
+tr=read.csv("PostprocessedData/20110329_FieldData_namescorrected.csv")
 head(tr)
 dim(tr)
-labdt=read.csv("Data/LabData_errorflags.csv")
+labdt=read.csv("PostprocessedData/LabData_errorflags.csv")
 head(labdt)
 dim(labdt)
 
@@ -188,7 +189,7 @@ summary(mx)
 dim(mx)
 
 ##Veg traits
-cpall=read.csv("Data/Releve66_96_NamesCorrected.csv", header=T)
+cpall=read.csv("PostprocessedData/Releve66_96_NamesCorrected.csv", header=T)
 head(cpall)
 dim(cpall)
 
@@ -200,7 +201,7 @@ summary(grw)
 dim(grw)
 
 ##Isotope data
-iso=read.csv("Data/isotopes_namescorrected.csv")
+iso=read.csv("PostprocessedData/isotopes_namescorrected.csv")
 head(iso)
 
 isomean=aggregate(iso[5:16], by=list(iso$NewGenus, iso$NewSpecies), mean, na.rm=T)
@@ -268,4 +269,4 @@ allsptr1=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T)
 colnames(allsptr)
 dim(allsptr)
 
-write.csv(allsptr, "Data/SpeciesTraits_ErrorsExcluded.csv",row.names=F)
+write.csv(allsptr, "PostprocessedData/SpeciesTraits_ErrorsExcluded.csv",row.names=F)

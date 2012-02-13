@@ -1,5 +1,5 @@
 setwd("C:/Work/Dimensions/Data") # Change this to your local Dimensions/Data directory
-
+#setwd("D:\\Jasper\\Side projects\\Taylor plots\\GitData\\Dimensions\\Data")
 #########################################################################
 #########################################################################
 ################### STEP 1: SYNONYM CORRECTIONS  ########################
@@ -64,8 +64,10 @@ old1<-old1[-which(old1[,1]%in%seas[,1]),]
 new1<-new1[-which(new1[,1]%in%seas[,1]),]
 
 ##Write corrected files
-write.csv(new1, "Data/ReleveQuadrat2010_NamesCorrected.csv", row.names=F)
-write.csv(old1, "Data/Releve66_96_NamesCorrected.csv", row.names=F)
+#make folder
+dir.create("PostprocessedData")
+write.csv(new1, "PostprocessedData/ReleveQuadrat2010_NamesCorrected.csv", row.names=F)
+write.csv(old1, "PostprocessedData/Releve66_96_NamesCorrected.csv", row.names=F)
 
 #########################################################################
 ################### Correct synonyms in (field & lab) trait data ########
@@ -105,7 +107,7 @@ nrow(fieldtr2[is.na(fieldtr2$NewGenus)==T,])  #0
 fieldtr2<-fieldtr2[-which(fieldtr2[,1]%in%seas[,1]),]
 
 ##Write corrected file
-write.csv(fieldtr2, "Data/20110329_FieldData_namescorrected.csv", row.names=F)
+write.csv(fieldtr2, "PostprocessedData/20110329_FieldData_namescorrected.csv", row.names=F)
 
 #########################################################################
 ################### Correct synonyms in isotope data ####################
@@ -131,7 +133,7 @@ dim(iso2)
 ##Exclude seasonally apparent species
 iso2<-iso2[-which(iso2[,1]%in%seas[,1]),]
 
-write.csv(iso2, "Data/isotopes_namescorrected.csv", row.names=F)
+write.csv(iso2, "PostprocessedData/isotopes_namescorrected.csv", row.names=F)
 
 
 #########################################################################
@@ -144,8 +146,8 @@ library(reshape)
 library(gregmisc)
 
 #Read in data
-new=read.csv("Data/ReleveQuadrat2010_namescorrected.csv")
-old=read.csv("Data/Releve66_96_NamesCorrected.csv")
+new=read.csv("PostprocessedData/ReleveQuadrat2010_namescorrected.csv")
+old=read.csv("PostprocessedData/Releve66_96_NamesCorrected.csv")
 
 str(new)
 
@@ -179,9 +181,16 @@ mold=rename.vars(mold, from="value", to="AbunClass")
 #merge old & new
 releve2=merge(releve,mold,by=c("Year","Plot","NewGenus","NewSpecies"),all=T)
 
+#Reclassify 2010 abundance
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun<=4]=1
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=5 & releve2$TotalAbun<=10]=2
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=11 & releve2$TotalAbun<=50]=3
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=51 & releve2$TotalAbun<=100]=4
+releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=101]=5
+
 releve2=subset(releve2, select=c("Year","Plot","NewGenus","NewSpecies","MeanPercCov","TotalAbun","AbunClass"))
 
-write.csv(releve2, "Data/ReleveAll.csv")
+write.csv(releve2, "PostprocessedData/ReleveAll.csv")
 
 
 #########################################################################
@@ -196,7 +205,7 @@ library(gregmisc)
 #################### Lab Data ######################
 ####################################################
 
-tr=read.csv("Data/20110329_FieldData_namescorrected.csv", stringsAsFactors=F)
+tr=read.csv("PostprocessedData/20110329_FieldData_namescorrected.csv", stringsAsFactors=F)
 head(tr)
 dim(tr)
 str(tr)
@@ -276,11 +285,11 @@ alltr$LeafDry_g=alltr$RawLeafDry_g/alltr$NumLeaves
 summary(alltr)
 
 
-write.csv(alltr, "Data/LabData.csv",row.names=F)
+write.csv(alltr, "PostprocessedData/LabData.csv",row.names=F)
 
 ######### Correcting Errors in Lab Data ############
 ####################################################
-labdt=read.csv("Data/LabData.csv")
+labdt=read.csv("PostprocessedData/LabData.csv")
 head(labdt)
 dim(labdt)
 
@@ -296,16 +305,16 @@ labdt[which(labdt$BranchingOrder>4),]
 labdt$BranchingOrder[which(labdt$BranchingOrder>4)]=NA
 labdt[which(labdt$BranchingOrder>4),]
 
-write.csv(labdt, "Data/LabData.csv",row.names=F)
+write.csv(labdt, "PostprocessedData/LabData.csv",row.names=F)
  
 ########### Traits by Species Dataframe ############
 ####################################################
 ## NOTE: If you want to flag & exclude errors, run the errorflags.r script instead of this part
 
-tr=read.csv("Data/20110329_FieldData_namescorrected.csv")
+tr=read.csv("PostprocessedData/20110329_FieldData_namescorrected.csv")
 head(tr)
 dim(tr)
-labdt=read.csv("Data/LabData.csv")
+labdt=read.csv("PostprocessedData/LabData.csv")
 head(labdt)
 dim(labdt)
 
@@ -393,7 +402,7 @@ summary(mx)
 dim(mx)
 
 ##Veg traits
-cpall=read.csv("Data/Releve66_96_NamesCorrected.csv", header=T)
+cpall=read.csv("PostprocessedData/Releve66_96_NamesCorrected.csv", header=T)
 head(cpall)
 dim(cpall)
 
@@ -405,7 +414,7 @@ summary(grw)
 dim(grw)
 
 ##Isotope data
-iso=read.csv("Data/isotopes_namescorrected.csv")
+iso=read.csv("PostprocessedData/isotopes_namescorrected.csv")
 head(iso)
 
 isomean=aggregate(iso[5:16], by=list(iso$NewGenus, iso$NewSpecies), mean, na.rm=T)
@@ -473,4 +482,4 @@ allsptr1=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T)
 colnames(allsptr)
 dim(allsptr)
 
-write.csv(allsptr, "Data/SpeciesTraits.csv",row.names=F)
+write.csv(allsptr, "PostprocessedData/SpeciesTraits.csv",row.names=F)
