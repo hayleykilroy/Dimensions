@@ -1,19 +1,27 @@
 #################################################################################
 ###  Process the LANDSAT data to develop the per-plot NDVI trajectories
 ###
-
+library(multicore)
 
 ## data were downloaded from http://earthexplorer.usgs.gov/
 ## region limited to cape point via website search
 ## all daytime landsat 1-7 scenes available there were included
 ## downloaded using the "bulk download application"
 
+datadir="/media/Data2/Data/LANDSAT/capepoint"
+
 ##################################################################################
 ###  Look at animation of 'quicklook' jpegs
 ### Unzip data
+qlf=list.files(datadir,pattern=".zip")
 
-
-
+mclapply(qlf,function(f) {
+  system(paste("unzip -O -d ",tempdir()," ",datadir,"/",f,sep=""))
+  ## copy the files to different directory
+  jpgs=grep("jpg$",list.files(tempdir(),
+    pattern=paste(sub(".zip","",f),".jpg",sep=""),full=T),value=T)
+  system(paste("cp ",paste(jpgs,collapse=" ")," ",datadir,"/quicklook",sep=""))
+})
 
 ###################################################################################
 ### Process the L1B images
