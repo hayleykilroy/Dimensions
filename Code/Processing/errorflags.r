@@ -269,4 +269,10 @@ allsptr1=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T)
 colnames(allsptr)
 dim(allsptr)
 
+# Add families to species traits
+fam3=subset(releve3, select=c("NewGenus","NewSpecies","FAMILY"))
+fam3=unique(fam3)
+fam3=rename.vars(fam3, from=c("NewGenus","NewSpecies"), to=c("Genus","Species"))
+allsptr=merge(allsptr, fam3, by=c("Genus","Species"), all.x=T)
+
 write.csv(allsptr, "PostprocessedData/SpeciesTraits_ErrorsExcluded.csv",row.names=F)

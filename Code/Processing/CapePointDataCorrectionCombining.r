@@ -12,7 +12,7 @@ library(xlsx)
 ## Read in synonym data
 syn=read.xlsx("PreprocessedData/MasterSynonymCorrections.xlsx", 1)
 
-# Create speciesID of genus & species names; minor edits (remove issues from NAs, double spaces)
+# Create speciesID of genus & species names; minor edits (remove issues due to NAs, double spaces)
 syn$SpeciesID=paste(syn$OldGenus, syn$OldSpecies)
 syn$SpeciesID=sub("NA", "", syn$SpeciesID)
 syn$SpeciesID=sub("  ", " ", syn$SpeciesID)
@@ -24,6 +24,9 @@ head(syn1)
 ## Read in list of seasonally apparent species
 seas=read.xlsx("PreprocessedData/MasterSynonymCorrections.xlsx", 2)
 
+## Read in list of new 2010 species, families, & traits
+famtrait2010=read.xlsx("PreprocessedData/MasterSynonymCorrections.xlsx", 3)
+
 #########################################################################
 ################### Correct synonyms in releve data #####################
 #########################################################################
@@ -31,7 +34,7 @@ seas=read.xlsx("PreprocessedData/MasterSynonymCorrections.xlsx", 2)
 #Read in releve data
 new=read.csv("PreprocessedData/ReleveQuadrat2010.csv")
 old=read.table("PreprocessedData/capepointALL.txt", header=T)
-
+                                                                                     
 # Correct from synonym spreadsheet
 old=rename.vars(old, from=c("GENUS","SPECIES"), to=c("Genus","Species"))
 old$SpeciesID=paste(old$Genus, old$Species)
@@ -54,14 +57,17 @@ head(new1)
 summary(new1)
 
 ###check to make sure all have been corrected
-old1[is.na(old1$NewGenus)==T,]
+#old1[is.na(old1$NewGenus)==T,]
 nrow(old1[is.na(old1$NewGenus)==T,])  #0
-new1[is.na(new1$NewGenus)==T,]
+#new1[is.na(new1$NewGenus)==T,]
 nrow(new1[is.na(new1$NewGenus)==T,]) #0
 
 ##Exclude seasonally apparent species
 old1<-old1[-which(old1[,1]%in%seas[,1]),]
 new1<-new1[-which(new1[,1]%in%seas[,1]),]
+
+# Correct ONE family synonym change
+old1$FAMILY[old1$FAMILY=="SELAGINACEAE"]="SCROPHULARIACEAE"
 
 ##Write corrected files
 #make folder
@@ -164,7 +170,7 @@ releve=subset(new, select=c(Plot, NewGenus, NewSpecies, MeanPercCov, TotalAbun))
 releve$Year=2010
 
 #reshape old data
-mold=melt.data.frame(old, id.vars=c("NewGenus","NewSpecies"), measure.vars=colnames(old)[24:185])
+mold=melt.data.frame(old, id.vars=c("NewGenus","NewSpecies", "FAMILY"), measure.vars=colnames(old)[24:185])
 
 #new columns
 mold$Plot=sub("X","",mold$variable)
@@ -188,9 +194,22 @@ releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=11 & releve2$Tot
 releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=51 & releve2$TotalAbun<=100]=4
 releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=101]=5
 
-releve2=subset(releve2, select=c("Year","Plot","NewGenus","NewSpecies","MeanPercCov","TotalAbun","AbunClass"))
+releve2=subset(releve2, select=c("Year","Plot","NewGenus","NewSpecies","FAMILY","MeanPercCov","TotalAbun","AbunClass"))
 
-write.csv(releve2, "PostprocessedData/ReleveAll.csv")
+## Add family to 2010 species
+fam2010=subset(famtrait2010, select=c("GENUS","SPECIES","FAMILY"))
+fam2010=rename.vars(fam2010, from=c("GENUS","SPECIES"), to=c("NewGenus","NewSpecies"))
+famold=subset(old, select=c("NewGenus","NewSpecies","FAMILY"))
+fam2=rbind(fam2010, famold)
+releve3=merge(releve2, fam2, by=c("NewGenus","NewSpecies"), all.x=T)
+releve3$FAMILY.x=as.character(releve3$FAMILY.x)
+releve3$FAMILY.x[is.na(releve3$FAMILY.x)==T]=as.character(releve3$FAMILY.y[is.na(releve3$FAMILY.x)==T])
+
+releve3=subset(releve3, select=c("Year","Plot","NewGenus","NewSpecies","FAMILY.x","MeanPercCov","TotalAbun","AbunClass"))
+releve3=rename.vars(releve3, from="FAMILY.x", to="FAMILY")
+
+
+write.csv(releve3, "PostprocessedData/ReleveAll.csv")
 
 
 #########################################################################
@@ -245,11 +264,19 @@ coord=coord[!is.na(coord$Latitude2010),]
 alltr=merge(alltr,coord,by="plot",all.x=T)
 dim(alltr)
 
+
 alltr=subset(alltr, select=c("Collector","GardenField","Date","Sample","Replicate",
   "NewGenus","NewSpecies","plot","VeldAge","Latitude2010","Longitude2010","Height_cm",
   "CanopyX_cm","CanopyY_cm","BranchingOrder","NumLeaves",
   "RawLeafArea_cm2","LeafLength_cm","AvgLeafWidth_cm","MaxLeafWidth_cm","LeafThickness_mm",
   "RawLeafFresh_g","RawLeafDry_g","TwigFresh_g","TwigDry_g","SLA","LeafSucculence","TwigSucculence"))
+
+# Family in trait data has many errors; add family from releve data
+fam3=subset(releve3, select=c("NewGenus","NewSpecies","FAMILY"))
+fam3=unique(fam3)
+
+alltr=merge(alltr, fam3, by=c("NewGenus","NewSpecies"), all.x=T)
+
 
 #Exclude 7 specimens with no lab data
 alltr=alltr[!is.na(alltr$Collector),]
@@ -481,5 +508,9 @@ dim(allsptr)
 allsptr1=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T)
 colnames(allsptr)
 dim(allsptr)
+
+# Add families to species traits
+fam3=rename.vars(fam3, from=c("NewGenus","NewSpecies"), to=c("Genus","Species"))
+allsptr=merge(allsptr, fam3, by=c("Genus","Species"), all.x=T)
 
 write.csv(allsptr, "PostprocessedData/SpeciesTraits.csv",row.names=F)
