@@ -187,7 +187,7 @@ env1=env[,c(1:5)]
 head(env1)
 env1$Depth_Center_m[is.na(env1$Depth_Center_m)==T]=env$Depth_Center_cm[is.na(env1$Depth_Center_m)==T]/100
 #Create slope/aspect metrics
-env1$eastwestness=sin(env1$Slope*pi/180)*cos(env1$Aspect*pi/180)
+env1$eastwestness=sin(env1$Slope*pi/180)*cos(env1$Aspect*pi/180)      
 env1$northsouthness=sin(env1$Slope*pi/180)*sin(env1$Aspect*pi/180)
 env1$slopetransformed=sin(env1$Slope*pi/180)
 
@@ -360,4 +360,4 @@ summary(lfreg2)
 lfreg3=lm(lfax1 ~ catm2$Moisture)
 summary(lfreg3)
 
-# High moisture sites -> longer leaves, lower SLA
+# Low moisture sites -> longer leaves, lower SLA
