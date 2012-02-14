@@ -1,5 +1,5 @@
 setwd("C:/Work/Dimensions/Data") # Change this to your local Dimensions/Data directory
-#setwd("D:\\Jasper\\Side projects\\Taylor plots\\GitData\\Dimensions\\Data")
+setwd("D:\\SAEON\\Projects\\Cape Point\\Taylor plots\\Data")
 #########################################################################
 #########################################################################
 ################### STEP 1: SYNONYM CORRECTIONS  ########################
