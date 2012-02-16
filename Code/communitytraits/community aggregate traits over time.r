@@ -1,10 +1,15 @@
+####################################################################
+##### Matrix Multiplication of Plot Abundance x Species Traits #####
+################### Includes 1966, 1996, & 2010  ###################
+####################################################################
+
 setwd("C:/Work/Dimensions/Data")
 library(reshape)
 library(lattice)
 
 ##Read in data
-tr1=read.csv("Data/SpeciesTraits_ErrorsExcluded.csv")
-pl1=read.csv("Data/ReleveAll.csv")
+tr1=read.csv("PostprocessedData/SpeciesTraits_ErrorsExcluded.csv")
+pl1=read.csv("PostprocessedData/ReleveAll.csv")
 
 head(tr1)
 head(pl1)
@@ -82,12 +87,14 @@ allsp=matrix(nrow=length(unique(c(sp_p, sp_t))), ncol=3)
 colnames(allsp)=c("Species", "Plots", "Traits")
 allsp=as.data.frame(allsp)
 allsp$Species=unique(c(sp_p, sp_t))
-allsp$Plots=allsp$Species%in%sp_p  # Is species in 2010 releve data- T/F?
+allsp$Plots=allsp$Species%in%sp_p  # Is species in releve data- T/F?
 allsp$Traits=allsp$Species%in%sp_t # Is species in trait data- T/F?
 head(allsp)
 summary(allsp)
 
 #noplot=allsp$Species[allsp$Plots==F]
+#noplot   #OK--these species were collected early in 2010 but never showed up in any plots ("Exists==FALSE" in 2010 trait data)
+
 notrait=allsp$Species[allsp$Traits==F]
 notrait
 
@@ -103,6 +110,44 @@ nodataperc2
 nodataperc2=nodataperc2[order(nodataperc2[,2]),]
 
 
+#### Exploration of most abundant species which we're missing traits for
+#miss=spabun_plot[,c(1,which(colnames(spabun_plot) %in%  notrait==T))]
+#miss66=miss[grepl("1966",miss$PlotYear)==T,]
+#miss96=miss[grepl("1996",miss$PlotYear)==T,]
+#miss10=miss[grepl("2010",miss$PlotYear)==T,]
+
+#misstot=cbind(colnames(miss66)[2:ncol(miss66)],colSums(miss66[,2:ncol(miss66)]),colSums(miss96[,2:ncol(miss96)]),colSums(miss10[,2:ncol(miss10)]))
+#colnames(misstot)=c("Species","SumMiss66","SumMiss96","SumMiss10")
+
+#miss.occur=miss
+#miss.occur[miss.occur>0]=1
+#miss.occur$PlotYear=miss$PlotYear
+#miss66o=miss.occur[grepl("1966",miss.occur$PlotYear)==T,]
+#miss96o=miss.occur[grepl("1996",miss.occur$PlotYear)==T,]
+#miss10o=miss.occur[grepl("2010",miss.occur$PlotYear)==T,]
+
+#misstot.occ=cbind(colnames(miss66o)[2:ncol(miss66o)],colSums(miss66o[,2:ncol(miss66o)]),colSums(miss96o[,2:ncol(miss96o)]),colSums(miss10o[,2:ncol(miss10o)]))
+#colnames(misstot.occ)=c("Species","NumMiss66","NumMiss96","NumMiss10")
+
+#misstot=merge(misstot, misstot.occ, by="Species") 
+
+#write.csv(misstot,"PostprocessedData/SpeciesMissingTraitsByYear.csv")
+## Check to make sure all species which make up at least 10% of any plot are included (they are)
+#miss2=data.frame()
+#x=1
+#for (i in 1:nrow(miss)){
+#  for (j in 2:ncol(miss)){
+#    if (miss[i,j]>=0.10){
+#       miss2[x,1]=miss$PlotYear[i]
+#       miss2[x,2]=colnames(miss)[j]
+#       miss2[x,3]=miss[i,j]
+#       x=x+1
+#       }}}
+#colnames(miss2)=c("PlotYear","Species","PercAbun")
+
+#miss1=read.xlsx("PostProcessedData/SpeciesMissingTraits.xlsx",1)
+#miss3=miss2[miss2$Species %in% as.character(miss1$Species)==F,]
+
 ##### Plot x Species Matrix - Renormalized to Exclude Species w/o Trait Data
 colnames(nodataperc2)=c("PlotYear", "PercNA")
 nodataperc2=as.data.frame(nodataperc2)
@@ -115,7 +160,7 @@ head(spabun_plot1)
 
 
 
-# Exlude plots with more than 25% of cover from species w/no trait data   <- This is 17 plot.years out of 228
+# Exlude plots with more than 25% of cover from species w/no trait data   <- This is 20 plot.years out of 228
 spa=spabun_plot1[spabun_plot1$PercNA<0.25,]
 
 
@@ -134,7 +179,7 @@ hist(yc1$PercNA[which(yc1$Year==1966)])
 
 
 # Remove species with no trait data & re-normalize
-spa=subset(spa, select=c("Plot", c(colnames(spa)[colnames(spa)%in%sp_t==T])))
+spa=subset(spa, select=c("PlotYear", c(colnames(spa)[colnames(spa)%in%sp_t==T])))
 head(spa)
 dim(spa)
 PlotTotal=rowSums(spa[2:ncol(spa)], na.rm=T)
@@ -167,6 +212,7 @@ dim(spa) # Number of columns should be one more than number of rows in tr3
 spa2=spa
 spa2[is.na(spa2)==T]=0
 
+#Excluding NAs--this is problematic!!! NAs can't just be zeros - should re-normalize species abundance to exclude NAs for each variable
 trcat=tr3[,2:ncol(tr3)]
 trcat=as.matrix(trcat)
 head(trcat)
@@ -175,3 +221,23 @@ str(trcat)
 
 spacat=spa2[,2:ncol(spa2)]
 spacat=as.matrix(spacat)
+
+trcat[is.na(trcat)==T]=0
+
+
+catm=spacat%*%trcat
+head(catm)
+dim(catm)
+summary(catm)
+
+catm=as.data.frame(catm)
+catm2=cbind(spa$PlotYear, catm)
+colnames(catm2)[1]="PlotYear"
+
+py=unlist(strsplit(as.character(catm2$PlotYear), " "))
+py=matrix(py, ncol=2, byrow=TRUE)
+
+catm2$Plot=py[,1]
+catm2$Year=py[,2]
+
+write.csv(catm2, "PostprocessedData/CAT_byPlotYear.csv", row.names=F)

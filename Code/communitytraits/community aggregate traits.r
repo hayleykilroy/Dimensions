@@ -1,11 +1,16 @@
+####################################################################
+##### Matrix Multiplication of Plot Abundance x Species Traits #####
+##########################  2010 Only  #############################
+####################################################################
+
 setwd("C:/Work/Dimensions/Data")
 library(reshape)
 library(lattice)
 
 ##Read in data
 
-tr1=read.csv("Data/SpeciesTraits_ErrorsExcluded.csv")
-pl1=read.csv("Data/ReleveQuadrat2010_NamesCorrected.csv")
+tr1=read.csv("PostprocessedData/SpeciesTraits_ErrorsExcluded.csv")
+pl1=read.csv("PostprocessedData/ReleveQuadrat2010_NamesCorrected.csv")
 
 head(tr1)
 head(pl1)
@@ -174,7 +179,7 @@ hist(catm2$PercN)           #right skewed
 hist(catm2$PercC)          # left skewed, potential outlier
 hist(catm2$C.N_ratio)      #normal
 
-write.csv(catm2, "Data/CAT_byPlot.csv", row.names=F)
+write.csv(catm2, "PostprocessedData/CAT_byPlot.csv", row.names=F)
 
 
 ##### By Plot Env Factors
