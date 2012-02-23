@@ -1,5 +1,5 @@
 setwd("C:/Work/Dimensions/Data") # Change this to your local Dimensions/Data directory
-setwd("D:\\SAEON\\Projects\\Cape Point\\Taylor plots\\Data")
+#setwd("D:\\SAEON\\Projects\\Cape Point\\Taylor plots\\Data")
 #########################################################################
 #########################################################################
 ################### STEP 1: SYNONYM CORRECTIONS  ########################
@@ -17,9 +17,9 @@ syn$SpeciesID=paste(syn$OldGenus, syn$OldSpecies)
 syn$SpeciesID=sub("NA", "", syn$SpeciesID)
 syn$SpeciesID=sub("  ", " ", syn$SpeciesID)
 
-head(syn)
+#head(syn)
 syn1=subset(syn, select=c("SpeciesID", "NewGenus", "NewSpecies"))
-head(syn1)
+#head(syn1)
 
 ## Read in list of seasonally apparent species
 seas=read.xlsx("PreprocessedData/MasterSynonymCorrections.xlsx", 2)
@@ -246,9 +246,9 @@ tr$UID=paste(tr$Date, tr$Sample, tr$Collector)
 labtr$UID=paste(labtr$Date, labtr$Sample, labtr$Collector)
 
 alltr=merge(tr, labtr, by="UID", suffixes=c(".x",""), all=T)
-head(alltr)
-dim(alltr)
-colnames(alltr)
+#head(alltr)
+#dim(alltr)
+#colnames(alltr)
 
 #add coordinates
 coord=read.csv("PreprocessedData/Taylor_COGHNR.csv")
@@ -355,35 +355,35 @@ means=subset(means, select=c("Group.1","Group.2","NumLeaves",
   "RawLeafArea_cm2","LeafArea_cm2","LeafLength_cm","AvgLeafWidth_cm","MaxLeafWidth_cm","LeafThickness_mm",
   "RawLeafFresh_g","RawLeafDry_g","LeafFresh_g","LeafDry_g","TwigFresh_g","TwigDry_g","SLA","LeafSucculence","TwigSucculence"))
 
-colnames(means)
+#colnames(means)
 colnames(means)=paste(colnames(means),"_Mean", sep="")
-colnames(means)
+#colnames(means)
 
 means=rename.vars(means, from="Group.1_Mean", to="Genus")
 means=rename.vars(means, from="Group.2_Mean", to="Species")
-colnames(means)
-summary(means)
-dim(means)
+#colnames(means)
+#summary(means)
+#dim(means)
 
 ##Stand Dev
 stdev=aggregate(labdt, by=list(labdt$NewGenus, labdt$NewSpecies), sd, na.rm=T)
 #warnings--that's ok
 
-summary(stdev)
+#summary(stdev)
 
 stdev=subset(stdev, select=c("Group.1","Group.2","NumLeaves",
   "RawLeafArea_cm2","LeafArea_cm2","LeafLength_cm","AvgLeafWidth_cm","MaxLeafWidth_cm","LeafThickness_mm",
   "RawLeafFresh_g","RawLeafDry_g","LeafFresh_g","LeafDry_g","TwigFresh_g","TwigDry_g","SLA","LeafSucculence","TwigSucculence"))
 
-colnames(stdev)
+#colnames(stdev)
 colnames(stdev)=paste(colnames(stdev),"_SD", sep="")
-colnames(stdev)
+#colnames(stdev)
 
 stdev=rename.vars(stdev, from="Group.1_SD", to="Genus")
 stdev=rename.vars(stdev, from="Group.2_SD", to="Species")
-colnames(stdev)
-summary(stdev)
-dim(stdev)
+#colnames(stdev)
+#summary(stdev)
+#dim(stdev)
 
 ##Number
 natest=subset(labdt, select=c("NewGenus","NewSpecies","NumLeaves",
@@ -391,27 +391,34 @@ natest=subset(labdt, select=c("NewGenus","NewSpecies","NumLeaves",
   "RawLeafFresh_g","RawLeafDry_g","LeafFresh_g","LeafDry_g","TwigFresh_g","TwigDry_g","SLA","LeafSucculence","TwigSucculence"))
 
 natest[,3:18]=!is.na(natest[,3:18])
-head(natest)
+#head(natest)
 natest[natest=="TRUE"]=1
-head(natest)
+#head(natest)
 
 n=aggregate(natest[,3:18], by=list(natest$NewGenus, natest$NewSpecies), sum)
 
-summary(n)
+#summary(n)
 
-colnames(n)
+#colnames(n)
 colnames(n)=paste(colnames(n),"_N", sep="")
-colnames(n)
+#colnames(n)
 
 n=rename.vars(n, from="Group.1_N", to="Genus")
 n=rename.vars(n, from="Group.2_N", to="Species")
-colnames(n)
-summary(n)
-dim(n)
+#colnames(n)
+#summary(n)
+#dim(n)
+
 
 ##Field Data Maximums
-mx=subset(tr, select=c("NewGenus","NewSpecies","Height_cm","CanopyX_cm","CanopyY_cm","BranchingOrder"))
-mx=aggregate(mx[3:6], by=list(mx$NewGenus, mx$NewSpecies), max, na.rm=T)
+
+# Calculate ellipse from Canopy X & Canopy Y
+tr$CanopyArea_sqcm=pi*tr$CanopyX_cm*tr$CanopyY_cm
+# Correct branching order of 12
+tr$BranchingOrder[tr$BranchingOrder==12]=2
+
+mx=subset(tr, select=c("NewGenus","NewSpecies","Height_cm","CanopyArea_sqcm","BranchingOrder"))
+mx=aggregate(mx[3:5], by=list(mx$NewGenus, mx$NewSpecies), max, na.rm=T)
 #warnings--that's ok
 
 head(mx)
@@ -435,7 +442,23 @@ dim(cpall)
 
 grw=subset(cpall, select=c("NewGenus","NewSpecies","DISPERSAL","REGENERATION","GROWTHFORM"))
 
-grw=rename.vars(grw, from=c("NewGenus","NewSpecies"), to=c("Genus","Species"))
+grw=rename.vars(grw, from=c("NewGenus","NewSpecies","REGENERATION"), to=c("Genus","Species","RESPROUTING"))
+
+#Add 2010 veg traits
+grw$Genus=as.character(grw$Genus)
+grw$Species=as.character(grw$Species)
+newgrw=subset(famtrait2010, select=c("GENUS","SPECIES","DISPERSAL","RESPROUTING","GROWTHFORM"))
+
+newgrw$GENUS=as.character(newgrw$GENUS)
+newgrw$SPECIES=as.character(newgrw$SPECIES)
+newgrw$DISPERSAL=as.integer(newgrw$DISPERSAL)
+newgrw$RESPROUTING=as.integer(newgrw$RESPROUTING)
+newgrw$GROWTHFORM=as.integer(newgrw$GROWTHFORM)
+newgrw=rename.vars(newgrw, from=c("GENUS","SPECIES"), to=c("Genus","Species"))
+
+grw=rbind(grw, newgrw)
+grw=unique(grw)
+
 colnames(grw)
 summary(grw)
 dim(grw)
@@ -451,6 +474,9 @@ dim(isomean)
 
 isomean=rename.vars(isomean, from="Group.1", to="Genus")
 isomean=rename.vars(isomean, from="Group.2", to="Species")
+isomean=rename.vars(isomean, from=c("STD_d.15N.14N.1","STD_d.13C.12C.1"), to=c("d15N","d13C"))
+
+isomean=subset(isomean, select=c("Genus","Species","PercN","d15N","PercC","d13C","C.N_ratio"))
 
 ##### Combining #####
 head(means)
@@ -474,8 +500,8 @@ mxcheck[mxcheck %in% meanscheck==F]  # Cussonia thyrsiflora; I am just going to 
 
 #Mismatch between isotope data and lab data
 isocheck=paste(isomean$Genus, isomean$Species)
-meanscheck[meanscheck %in% isocheck==F]   # Syncarpha canescens, Ficinia filiformis, Ficinia trichodes - in lab data but not isotope data
-isocheck[isocheck %in% meanscheck==F]   # Syncarpha gnaphaloides, Ficinia oligantha - in isotope data but not lab data
+meanscheck[meanscheck %in% isocheck==F]   # Syncarpha canescens, Ficinia trichodes - in lab data but not isotope data
+isocheck[isocheck %in% meanscheck==F]   # Syncarpha gnaphaloides - in isotope data but not lab data
 #Will have to deal with this....
 
 #Duplicates in veg traits
@@ -486,12 +512,24 @@ grw1check=paste(grw1$Genus, grw1$Species)
 length(grw1check)
 length(unique(grw1check))
 grw1[duplicated(grw1check)==T,]
-grw1[grw1$Genus=="Erica" & grw1$Species=="hispidula",]  #ok to remove row with NAs; no conflicts in values
-grw1[grw1$Genus=="Ficinia" & grw1$Species=="filiformis",] #no conflicts in values; ok to remove duplicate
-grw1[grw1$Genus=="Zygophyllum" & grw1$Species=="spinosum",] # Regeneration value differs between these two, so there is still a conflict
-# Remove duplicates
-grw2=grw1[duplicated(grw1check)==F,]
+dupl=grw1check[duplicated(grw1check)==T]
+dupl1=grw1[grw1check %in% dupl==T,]
+dupl1=dupl1[order(dupl1$Species),] 
+dupl1=dupl1[order(dupl1$Genus),] 
+dupl1
+#grw1[grw1$Genus=="Erica" & grw1$Species=="hispidula",]  #ok to remove row with NAs; no conflicts in values
+#grw1[grw1$Genus=="Ficinia" & grw1$Species=="filiformis",] #no conflicts in values; ok to remove duplicate
+#grw1[grw1$Genus=="Zygophyllum" & grw1$Species=="spinosum",] # Regeneration value differs between these two, so there is still a conflict
 
+# Correct duplicates
+grw2=aggregate(grw1, max, by=list(grw1$Genus,grw1$Species), na.rm=T) #takes care of rows with NAs where there are no conflicts in values
+                                                                     # also makes all resprout conflicts into resprouters & dispersal conflicts to long-distance
+grw2$GROWTHFORM[grw2$Genus=="Capelio" & grw2$Species=="tabularis"]=1 # makes this low shrub instead of tall shrub (conflict in values)
+
+grw2=rename.vars(grw2, from=c("Group.1","Group.2"), to=c("Genus","Species"))
+
+
+## Merging 
 
 allsptr=merge(means, stdev, by=c("Genus","Species"), all=T)
 colnames(allsptr)
@@ -502,10 +540,10 @@ dim(allsptr)
 allsptr=merge(allsptr, mx, by=c("Genus","Species"), all.x=T, all.y=F)
 colnames(allsptr)
 dim(allsptr)
-allsptr=merge(allsptr, isomean, by=c("Genus","Species"), all=T)
+allsptr=merge(allsptr, isomean, by=c("Genus","Species"), all.x=T, all.y=F)
 colnames(allsptr)
 dim(allsptr)
-allsptr1=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T)
+allsptr=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T, all.y=F)
 colnames(allsptr)
 dim(allsptr)
 
