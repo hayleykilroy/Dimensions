@@ -177,12 +177,42 @@ mold$Plot=sub("X","",mold$variable)
 mold$Plot=sub("[.].*","",mold$Plot)
 mold$Plot=as.numeric(mold$Plot)
 
-mold$Year[grepl(".66",mold$variable)==T]=1966
-mold$Year[grepl(".66",mold$variable)==F]=1996
+mold$Year[grepl("[.]66",mold$variable)==T]=1966
+mold$Year[grepl("[.]66",mold$variable)==F]=1996
 
-summary(mold)
+#summary(mold)
 
 mold=rename.vars(mold, from="value", to="AbunClass")
+
+#Exclude zeros
+mold=mold[mold$AbunClass!=0,]
+
+#combine duplicated synonyms in a plot (ie, Ficinia oligantha problem)
+mold1=mold
+mold1$AbunReclass[mold1$AbunClass==1]=2.5
+mold1$AbunReclass[mold1$AbunClass==2]=7.5
+mold1$AbunReclass[mold1$AbunClass==3]=25
+mold1$AbunReclass[mold1$AbunClass==4]=75
+mold1$AbunReclass[mold1$AbunClass==5]=100
+
+abunsum=aggregate(mold1$AbunReclass, by=list(mold1$NewGenus,mold1$NewSpecies,mold1$FAMILY,mold1$variable,mold1$Plot,mold1$Year), FUN=sum)
+colnames(abunsum)=colnames(mold1)[c(1:4,6:8)]
+
+##Correct abundance category for the merged version
+#Check for values other than the regular abunclass means:
+#unique(abunsum$AbunReclass)
+#this uses specific values from above:
+abunsum$AbunClass[abunsum$AbunReclass==2.5]=1
+abunsum$AbunClass[abunsum$AbunReclass==7.5]=2
+abunsum$AbunClass[abunsum$AbunReclass==25]=3
+abunsum$AbunClass[abunsum$AbunReclass==75]=4
+abunsum$AbunClass[abunsum$AbunReclass==100]=5
+abunsum$AbunClass[abunsum$AbunReclass==5]=2
+abunsum$AbunClass[abunsum$AbunReclass==32.5]=3
+abunsum$AbunClass[abunsum$AbunReclass==50]=3
+abunsum$AbunClass[abunsum$AbunReclass==27.5]=3
+
+mold=abunsum[,c(1:6,8)]
 
 #merge old & new
 releve2=merge(releve,mold,by=c("Year","Plot","NewGenus","NewSpecies"),all=T)
@@ -195,8 +225,7 @@ releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=11 & releve2$Tot
 releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=51 & releve2$TotalAbun<=100]=4
 releve2$AbunClass[is.na(releve2$AbunClass) & releve2$TotalAbun>=101]=5
 
-#Exclude zeros
-releve2=releve2[releve2$AbunClass!=0,]
+
 
 releve2=subset(releve2, select=c("Year","Plot","NewGenus","NewSpecies","FAMILY","MeanPercCov","TotalAbun","AbunClass"))
 
@@ -205,6 +234,7 @@ fam2010=subset(famtrait2010, select=c("GENUS","SPECIES","FAMILY"))
 fam2010=rename.vars(fam2010, from=c("GENUS","SPECIES"), to=c("NewGenus","NewSpecies"))
 famold=subset(old, select=c("NewGenus","NewSpecies","FAMILY"))
 fam2=rbind(fam2010, famold)
+fam2=unique(fam2)
 releve3=merge(releve2, fam2, by=c("NewGenus","NewSpecies"), all.x=T)
 releve3$FAMILY.x=as.character(releve3$FAMILY.x)
 releve3$FAMILY.x[is.na(releve3$FAMILY.x)==T]=as.character(releve3$FAMILY.y[is.na(releve3$FAMILY.x)==T])
