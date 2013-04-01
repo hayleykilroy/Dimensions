@@ -104,11 +104,21 @@ nodataperc1=rowSums(nodataperc, na.rm=T)
 nodataperc1
 summary(nodataperc1)
 hist(nodataperc1)
-nodataperc2=cbind(spabun_plot$PlotYear, nodataperc1)
-nodataperc2
+#nodataperc2=cbind(spabun_plot$PlotYear, nodataperc1)
+#nodataperc2
 
-nodataperc2=nodataperc2[order(nodataperc2[,2]),]
+#nodataperc2=nodataperc2[order(nodataperc2[,2]),]
 
+nodataperc2=unlist(strsplit(spabun_plot$PlotYear, split=" "))
+  plot=nodataperc2[seq(1,length(nodataperc2),by=2)]
+  year=nodataperc2[seq(2,length(nodataperc2),by=2)]
+nd66=(1-nodataperc1[year=="1966"])
+nd96=(1-nodataperc1[year=="1996"])
+nd10=(1-nodataperc1[year=="2010"])
+
+hist(nd66, xlab="Percent of Relative Cover of Species with Trait Data", ylab="Number of Plots",main="Cape Point, 1966")
+hist(nd96, xlab="Percent of Relative Cover of Species with Trait Data", ylab="Number of Plots",main="Cape Point, 1996")
+hist(nd10, xlab="Percent of Relative Cover of Species with Trait Data", ylab="Number of Plots",main="Cape Point, 2010")
 
 #### Exploration of most abundant species which we're missing traits for
 #miss=spabun_plot[,c(1,which(colnames(spabun_plot) %in%  notrait==T))]
