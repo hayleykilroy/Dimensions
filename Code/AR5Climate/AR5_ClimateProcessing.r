@@ -1,4 +1,5 @@
-files=list.files("nc_files", full.names=T)
+setwd("/media/Data/Work/Regional/CFR/AR5Climate")
+files=list.files("nc_files1", full.names=T)
 
 library(raster)
 
@@ -14,9 +15,9 @@ test=brick(files[which(grepl("_pr_",files)==T)][[11]], varname="pr")  # <- works
 
 
 f=data.frame(file=files)
-#f$model
+
 f[,c("model","scenario","variable","time")]=
-  do.call(rbind.data.frame,strsplit(sub("^.*[/][0-9]*_","",f$file),"_"))
+  do.call(rbind.data.frame,strsplit(sub("^.*[/]","",f$file),"_"))
 f[,c("starttime","stoptime")]=do.call(rbind.data.frame,strsplit(sub("[.]nc","",f$time),"-"))
 #f$starttime=as.Date(as.character(f$starttime),"%Y %m")
 
@@ -24,8 +25,7 @@ f[,c("starttime","stoptime")]=do.call(rbind.data.frame,strsplit(sub("[.]nc","",f
 scenario="rcp85"
 model="CCCma-CanRCM4"
 
-
-## confirm files and remove [1]!!!
+#### check files and remove "[1]"!!
 #historical files
 rcm_mon_hist_tasmax=paste(f$file[which(f$scenario=="historical" & f$variable=="tasmax")][1],collapse=" ")
 rcm_mon_hist_tasmin=paste(f$file[which(f$scenario=="historical" & f$variable=="tasmin")][1],collapse=" ")
@@ -40,7 +40,7 @@ rcm_day_future_pr=paste(f$file[which(f$scenario==scenario & f$variable=="pr")][1
 rcm_mon_hist=paste("output/",model,"_",scenario,"_monthlypast.nc",sep="")
 rcm_clim_hist=paste("output/",model,"_",scenario,"_monthlypastclimate.nc",sep="")
 
-### Create monthly historical climatologies
+### Create monthly historical climatologies                     ###### <- ERROR HERE: when "[1]"s are removed above, variables with same names are treated as different variables
 system(paste("cdo -O -merge -mergetime ",rcm_mon_hist_tasmin,
              " -mergetime ",rcm_mon_hist_tasmax,
              " -mergetime ",rcm_mon_hist_pr," ",
@@ -53,7 +53,7 @@ rcm_day_future=paste("output/",model,"_",scenario,"_futuredaily.nc",sep="")
 rcm_day_futureanom=paste("output/",model,"_",scenario,"_futuredailyanomalies1.nc",sep="")
 rcm_day_futureanom2=paste("output/",model,"_",scenario,"_futuredailyanomalies.nc",sep="")
 
-system(paste("cdo -O -merge -mergetime ",rcm_day_future_tasmin,
+system(paste("cdo -O -merge -mergetime ",rcm_day_future_tasmin, ###### <- ERROR HERE: when "[1]"s are removed above, variables with same names are treated as different variables
              " -mergetime ",rcm_day_future_tasmax,
              " -mergetime ",rcm_day_future_pr," ",
              rcm_day_future,sep=""))  
