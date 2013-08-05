@@ -1,11 +1,16 @@
+####################################################################
+##### Matrix Multiplication of Plot Abundance x Species Traits #####
+##########################  2010 Only  #############################
+####################################################################
+
 setwd("C:/Work/Dimensions/Data")
 library(reshape)
 library(lattice)
 
 ##Read in data
 
-tr1=read.csv("Data/SpeciesTraits_ErrorsExcluded.csv")
-pl1=read.csv("Data/ReleveQuadrat2010_NamesCorrected.csv")
+tr1=read.csv("PostprocessedData/SpeciesTraits_ErrorsExcluded.csv")
+pl1=read.csv("PostprocessedData/ReleveQuadrat2010_NamesCorrected.csv")
 
 head(tr1)
 head(pl1)
@@ -174,7 +179,7 @@ hist(catm2$PercN)           #right skewed
 hist(catm2$PercC)          # left skewed, potential outlier
 hist(catm2$C.N_ratio)      #normal
 
-write.csv(catm2, "Data/CAT_byPlot.csv", row.names=F)
+write.csv(catm2, "PostprocessedData/CAT_byPlot.csv", row.names=F)
 
 
 ##### By Plot Env Factors
@@ -187,7 +192,7 @@ env1=env[,c(1:5)]
 head(env1)
 env1$Depth_Center_m[is.na(env1$Depth_Center_m)==T]=env$Depth_Center_cm[is.na(env1$Depth_Center_m)==T]/100
 #Create slope/aspect metrics
-env1$eastwestness=sin(env1$Slope*pi/180)*cos(env1$Aspect*pi/180)
+env1$eastwestness=sin(env1$Slope*pi/180)*cos(env1$Aspect*pi/180)      
 env1$northsouthness=sin(env1$Slope*pi/180)*sin(env1$Aspect*pi/180)
 env1$slopetransformed=sin(env1$Slope*pi/180)
 
@@ -360,4 +365,4 @@ summary(lfreg2)
 lfreg3=lm(lfax1 ~ catm2$Moisture)
 summary(lfreg3)
 
-# High moisture sites -> longer leaves, lower SLA
+# Low moisture sites -> longer leaves, lower SLA

@@ -170,8 +170,13 @@ summary(n)
 dim(n)
 
 ##Field Data Maximums
-mx=subset(tr, select=c("NewGenus","NewSpecies","Height_cm","CanopyX_cm","CanopyY_cm","BranchingOrder"))
-mx=aggregate(mx[3:6], by=list(mx$NewGenus, mx$NewSpecies), max, na.rm=T)
+#Calculate ellipse from Canopy X & Canopy Y
+tr$CanopyArea_sqcm=pi*tr$CanopyX_cm*tr$CanopyY_cm
+# Correct branching order of 12
+tr$BranchingOrder[tr$BranchingOrder==12]=2
+
+mx=subset(tr, select=c("NewGenus","NewSpecies","Height_cm","CanopyArea_sqcm","BranchingOrder"))
+mx=aggregate(mx[3:5], by=list(mx$NewGenus, mx$NewSpecies), max, na.rm=T)
 #warnings--that's ok
 
 head(mx)
@@ -195,7 +200,22 @@ dim(cpall)
 
 grw=subset(cpall, select=c("NewGenus","NewSpecies","DISPERSAL","REGENERATION","GROWTHFORM"))
 
-grw=rename.vars(grw, from=c("NewGenus","NewSpecies"), to=c("Genus","Species"))
+grw=rename.vars(grw, from=c("NewGenus","NewSpecies","REGENERATION"), to=c("Genus","Species","RESPROUTING"))
+
+#Add 2010 veg traits
+grw$Genus=as.character(grw$Genus)
+grw$Species=as.character(grw$Species)
+newgrw=subset(famtrait2010, select=c("GENUS","SPECIES","DISPERSAL","RESPROUTING","GROWTHFORM"))
+
+newgrw$GENUS=as.character(newgrw$GENUS)
+newgrw$SPECIES=as.character(newgrw$SPECIES)
+newgrw$DISPERSAL=as.integer(newgrw$DISPERSAL)
+newgrw$RESPROUTING=as.integer(newgrw$RESPROUTING)
+newgrw$GROWTHFORM=as.integer(newgrw$GROWTHFORM)
+newgrw=rename.vars(newgrw, from=c("GENUS","SPECIES"), to=c("Genus","Species"))
+
+grw=rbind(grw, newgrw)
+grw=unique(grw)
 colnames(grw)
 summary(grw)
 dim(grw)
@@ -211,6 +231,10 @@ dim(isomean)
 
 isomean=rename.vars(isomean, from="Group.1", to="Genus")
 isomean=rename.vars(isomean, from="Group.2", to="Species")
+isomean=rename.vars(isomean, from=c("STD_d.15N.14N.1","STD_d.13C.12C.1"), to=c("d15N","d13C"))
+
+isomean=subset(isomean, select=c("Genus","Species","PercN","d15N","PercC","d13C","C.N_ratio"))
+ 
 
 ##### Combining #####
 head(means)
@@ -246,12 +270,24 @@ grw1check=paste(grw1$Genus, grw1$Species)
 length(grw1check)
 length(unique(grw1check))
 grw1[duplicated(grw1check)==T,]
-grw1[grw1$Genus=="Erica" & grw1$Species=="hispidula",]  #ok to remove row with NAs; no conflicts in values
-grw1[grw1$Genus=="Ficinia" & grw1$Species=="filiformis",] #no conflicts in values; ok to remove duplicate
-grw1[grw1$Genus=="Zygophyllum" & grw1$Species=="spinosum",] # Regeneration value differs between these two, so there is still a conflict
-# Remove duplicates
-grw2=grw1[duplicated(grw1check)==F,]
+dupl=grw1check[duplicated(grw1check)==T]
+dupl1=grw1[grw1check %in% dupl==T,]
+dupl1=dupl1[order(dupl1$Species),] 
+dupl1=dupl1[order(dupl1$Genus),] 
+dupl1
+#grw1[grw1$Genus=="Erica" & grw1$Species=="hispidula",]  #ok to remove row with NAs; no conflicts in values
+#grw1[grw1$Genus=="Ficinia" & grw1$Species=="filiformis",] #no conflicts in values; ok to remove duplicate
+#grw1[grw1$Genus=="Zygophyllum" & grw1$Species=="spinosum",] # Regeneration value differs between these two, so there is still a conflict
 
+# Correct duplicates
+grw2=aggregate(grw1, max, by=list(grw1$Genus,grw1$Species), na.rm=T) #takes care of rows with NAs where there are no conflicts in values
+                                                                     # also makes all resprout conflicts into resprouters & dispersal conflicts to long-distance
+grw2$GROWTHFORM[grw2$Genus=="Capelio" & grw2$Species=="tabularis"]=1 # makes this low shrub instead of tall shrub (conflict in values)
+
+grw2=subset(grw2, select=c("Genus","Species","DISPERSAL","RESPROUTING","GROWTHFORM"))
+
+
+## Merging 
 
 allsptr=merge(means, stdev, by=c("Genus","Species"), all=T)
 colnames(allsptr)
@@ -262,11 +298,17 @@ dim(allsptr)
 allsptr=merge(allsptr, mx, by=c("Genus","Species"), all.x=T, all.y=F)
 colnames(allsptr)
 dim(allsptr)
-allsptr=merge(allsptr, isomean, by=c("Genus","Species"), all=T)
+allsptr=merge(allsptr, isomean, by=c("Genus","Species"), all.x=T, all.y=F)
 colnames(allsptr)
 dim(allsptr)
-allsptr1=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T)
+allsptr=merge(allsptr, grw2, by=c("Genus","Species"), all.x=T, all.y=F)
 colnames(allsptr)
 dim(allsptr)
+
+# Add families to species traits
+fam3=subset(releve3, select=c("NewGenus","NewSpecies","FAMILY"))
+fam3=unique(fam3)
+fam3=rename.vars(fam3, from=c("NewGenus","NewSpecies"), to=c("Genus","Species"))
+allsptr=merge(allsptr, fam3, by=c("Genus","Species"), all.x=T)
 
 write.csv(allsptr, "PostprocessedData/SpeciesTraits_ErrorsExcluded.csv",row.names=F)
