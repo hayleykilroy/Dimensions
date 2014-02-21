@@ -368,6 +368,19 @@ labdt[which(labdt$BranchingOrder>4),]
 
 write.csv(labdt, "PostprocessedData/LabData.csv",row.names=F)
  
+
+
+
+## ******************************************************************** ##
+## Everything below this is run in efforflags.r 
+## ******************************************************************** ##
+
+
+
+
+
+
+
 ########### Traits by Species Dataframe ############
 ####################################################
 ## NOTE: If you want to flag & exclude errors, run the errorflags.r script instead of this part
